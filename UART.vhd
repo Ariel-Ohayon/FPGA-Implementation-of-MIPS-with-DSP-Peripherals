@@ -118,84 +118,154 @@ port(
 rst,clk: in std_logic;
 Data_in: in std_logic;
 Data_out: out std_logic_vector(7 downto 0);
-Error: out std_logic := '0');
+Error: out std_logic := '0';
+flag: out std_logic);
 end;
 
 architecture one of Reciever is
 
-type state is (IDLE,STRT,D0,D1,D2,D3,D4,D5,D6,D7,STP);
-signal ps,ns: state;
-signal counter: integer range 0 to 5208 := 0;
---signal En: std_logic := '0';
+-- Component --
+component Reciever_sync
+port(
+rst,clk: in  	 std_logic;		-- clk is 50[MHz]
+rx:		in  	 std_logic;
+UARTclk:	out 	 std_logic;
+En:		buffer std_logic);
+end component;
+-- Component --
 
 signal UARTclk: std_logic;
+signal Q: std_logic_vector(9 downto 0);
 
 begin
-
-	P1:process(rst,clk)
+	U1: Reciever_Sync port map (rst,clk,Data_in,UARTclk,flag);
+	process(rst,clk)
 	begin
 		if (rst = '1') then
-			counter <= 0;
-			UARTclk <= '0';
-		elsif (clk 'event and clk = '1') then
-			if (not (ps = IDLE)) then
-				if (counter = 5208) then
-					counter <= 0;
-					UARTclk <= '0';
-				elsif (counter < 5208/2) then
-					counter <= counter + 1;
-					UARTclk <= '0';
-				else
-					counter <= counter + 1;
-					UARTclk <= '1';
-				end if;
-			end if;
+			Q <= (others => '0');
+		elsif (UARTclk 'event and UARTclk = '1') then
+			Q <= Data_in & Q(9 downto 1);
 		end if;
 	end process;
-	
-	P2:process(UARTclk,rst) -- need to be here multiplexing between two clk signals
+	Data_out <= Q(8 downto 1);
+end;
+
+-- Reciever_Sync Module
+library ieee;
+use ieee.std_logic_1164.all;
+
+entity Reciever_sync is
+port(
+rst,clk: in  	 std_logic;		-- clk is 50[MHz]
+rx:		in  	 std_logic;
+UARTclk:	out 	 std_logic;
+En:		buffer std_logic);
+end;
+
+architecture one of Reciever_Sync is
+
+-- Components --
+component Recieve_En_Sync
+port(
+rst:	in  	 std_logic;
+clk:	in  	 std_logic;
+rx:	in 	 std_logic;
+flag:	buffer std_logic);
+end component;
+
+component Reciever_clk_Sync
+port (
+rst,clk: in  std_logic;
+En:		in  std_logic;
+UARTclk: out std_logic);
+end component;
+-- Components --
+
+signal sUARTclk: std_logic;
+signal flag: std_logic;
+
+begin
+UARTclk <= sUARTclk;
+U1: Recieve_En_Sync  port map (rst,sUARTclk,rx,flag);
+U2: Reciever_clk_Sync port map (rst,clk,flag,sUARTclk);
+end;
+
+
+-- Reciever_En_Sync Module
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_unsigned.all;
+
+entity Recieve_En_Sync is
+port(
+rst:	in  	 std_logic;
+clk:	in  	 std_logic;
+rx:	in 	 std_logic;
+flag:	buffer std_logic);
+end;
+
+architecture one of Recieve_En_Sync is
+signal counter: integer range 0 to 11 := 0;
+begin
+	process(rx,rst)
 	begin
-	if (rst = '1') then
-		ps <= IDLE;
-	elsif (UARTclk 'event and UARTclk = '1') then
-		ps <= ns;
-	end if;
+		
+		if (rst = '1') then
+			flag <= '0';
+		elsif (rx 'event and rx = '1') then
+			if (flag = '0') then
+				flag <= '1';
+			end if;
+		end if;
+		
+		if (rst = '1') then
+			counter <= 0;
+		elsif ((clk 'event and clk = '1') and (flag = '1')) then
+			counter <= counter + 1;
+		end if;
+		if (counter = 11) then
+			counter <= 0;
+			flag <= '0';
+		end if;
+		
 	end process;
-	
-	P3:process(ps,Data_in)
-	begin
-		case (ps) is
-			when IDLE =>
-				if (Data_in = '1') then
-					ns <= IDLE;
-				else
-					ns <= STRT;
-				end if;
-				Error <= '0';
-			when STRT =>
-				if (data_in = '0') then
-					Error <= '0';	-- There is no error
-					ns <= D0;
-				else
-					Error <= '1';	-- There is error
-					ns <= IDLE;		-- Have to check it (Simulation) -- line mesukan
-				end if;
-			when D0 => Data_out(0) <= Data_in; ns <= D1;  Error <= '0';		--	Latch in synthesis convert to shift register
-			when D1 => Data_out(1) <= Data_in; ns <= D2;  Error <= '0';		--	Latch in synthesis convert to shift register
-			when D2 => Data_out(2) <= Data_in; ns <= D3;  Error <= '0';		--	Latch in synthesis convert to shift register
-			when D3 => Data_out(3) <= Data_in; ns <= D4;  Error <= '0';		--	Latch in synthesis convert to shift register
-			when D4 => Data_out(4) <= Data_in; ns <= D5;  Error <= '0';		--	Latch in synthesis convert to shift register
-			when D5 => Data_out(5) <= Data_in; ns <= D6;  Error <= '0';		--	Latch in synthesis convert to shift register
-			when D6 => Data_out(6) <= Data_in; ns <= D7;  Error <= '0';		--	Latch in synthesis convert to shift register
-			when D7 => Data_out(7) <= Data_in; ns <= STP; Error <= '0';		--	Latch in synthesis convert to shift register
-			when STP =>
-				if (Data_in = '1') then
-					Error <= '0';	-- There is no error
-				else
-					Error <= '1';	-- There is error
-				end if;
-				ns <= IDLE;
-		end case;
+end;
+
+-- Reciever_clk_sync Module
+library ieee;
+use ieee.std_logic_1164.all;
+
+entity Reciever_clk_Sync is
+port (
+rst,clk: in  std_logic; -- clk - 50[MHz]
+En:		in  std_logic;
+UARTclk: out std_logic);
+end;
+
+architecture one of Reciever_clk_Sync is
+signal clkdiv: integer range 0 to 5208 := 0;
+begin
+process(rst,En,clk)
+begin
+	if (rst = '1') then
+		UARTclk <= '0';
+		clkdiv <= 0;
+	elsif (En = '1') then
+		if (clk 'event and clk = '1') then
+			if ((clkdiv < 2604) or (clkdiv = 2604)) then
+				clkdiv <= clkdiv+1;
+				UARTclk <= '0';
+			elsif ((clkdiv < 5208) and (clkdiv > 2604)) then
+				clkdiv <= clkdiv + 1;
+				UARTclk <= '1';
+			else
+				clkdiv <= 0;
+				UARTclk <= '0';
+			end if;
+		end if;
+	else
+		UARTclk <= '0';
+	end if;
 	end process;
 end;
 
@@ -205,11 +275,11 @@ use ieee.std_logic_1164.all;
 
 entity UART is
 port(
-rst,clk: in std_logic;
+rst,clk: in std_logic;							-- 50[MHz] clk Signal
 rx: in std_logic;
 tx: out std_logic;
-sendTrig: in std_logic;
-SendFlag,ErrorFlag: out std_logic;
+sendTrig: in std_logic;							-- When sendTrig rising edge the transmitter start working
+SendFlag,ErrorFlag: out std_logic;			-- when SendFlag rising edge the transmitter finish send the data (1[Byte])
 Data_to_Send: in  std_logic_vector(7 downto 0);
 Data_Recieve: out std_logic_vector(7 downto 0));
 end;
@@ -228,7 +298,7 @@ end component;
 
 component Reciever
 port(
-rst,clk: in std_logic;
+rst,clk: in std_logic;							-- 50[MHz] clk Signal
 Data_in: in std_logic;
 Data_out: out std_logic_vector(7 downto 0);
 Error: out std_logic
