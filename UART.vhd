@@ -132,6 +132,15 @@ rx:		in  	 std_logic;
 UARTclk:	out 	 std_logic;
 En:		buffer std_logic);
 end component;
+
+component Reciever_Shift_Register
+generic (N: integer := 10);
+port(
+rst,clk: in std_logic;
+D: in std_logic;
+Q: buffer std_logic_vector(N-1 downto 0));
+end component;
+
 -- Component --
 
 signal UARTclk: std_logic;
@@ -139,15 +148,32 @@ signal Q: std_logic_vector(9 downto 0);
 
 begin
 	U1: Reciever_Sync port map (rst,clk,Data_in,UARTclk,flag);
+	U2: Reciever_Shift_Register generic map (10) port map (rst,UARTclk,Data_in,Q);
+	Data_out <= Q(8 downto 1);
+end;
+
+-- Reciever Shift Register Module
+library ieee;
+use ieee.std_logic_1164.all;
+
+entity Reciever_Shift_Register is
+generic (N: integer := 10);
+port(
+rst,clk: in std_logic;
+D: in std_logic;
+Q: buffer std_logic_vector(N-1 downto 0));
+end;
+
+architecture one of Reciever_Shift_Register is
+begin
 	process(rst,clk)
 	begin
 		if (rst = '1') then
 			Q <= (others => '0');
-		elsif (UARTclk 'event and UARTclk = '1') then
-			Q <= Data_in & Q(9 downto 1);
+		elsif (clk 'event and clk = '1') then
+			Q <= D & Q(N-1 downto 1);
 		end if;
 	end process;
-	Data_out <= Q(8 downto 1);
 end;
 
 -- Reciever_Sync Module
@@ -188,6 +214,7 @@ begin
 UARTclk <= sUARTclk;
 U1: Recieve_En_Sync  port map (rst,sUARTclk,rx,flag);
 U2: Reciever_clk_Sync port map (rst,clk,flag,sUARTclk);
+En <= flag;
 end;
 
 
@@ -207,12 +234,11 @@ end;
 architecture one of Recieve_En_Sync is
 signal counter: integer range 0 to 11 := 0;
 begin
-	process(rx,rst)
+	process(rx,rst,clk)
 	begin
-		
 		if (rst = '1') then
 			flag <= '0';
-		elsif (rx 'event and rx = '1') then
+		elsif (rx 'event and rx = '0') then
 			if (flag = '0') then
 				flag <= '1';
 			end if;
@@ -220,14 +246,17 @@ begin
 		
 		if (rst = '1') then
 			counter <= 0;
-		elsif ((clk 'event and clk = '1') and (flag = '1')) then
-			counter <= counter + 1;
+		elsif (clk 'event and clk = '1') then
+			if (flag = '1') then
+				counter <= counter + 1;
+			else
+				counter <= 0;
+			end if;
 		end if;
 		if (counter = 11) then
 			counter <= 0;
 			flag <= '0';
 		end if;
-		
 	end process;
 end;
 
