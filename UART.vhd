@@ -319,7 +319,7 @@ component Transmitter
 port(
 	rst,clk: in std_logic;							-- 50[MHz] CLK signal
 	Data_in: in std_logic_vector(7 downto 0);
-	Data_out: out std_logic := '1';pelling mistakes
+	Data_out: out std_logic := '1';
 	Send: in std_logic;
 	EOF: out std_logic := '0'
 );
