@@ -108,12 +108,12 @@ begin
 	end process;
 end;
 
--- Reciever module
+-- Receiver module
 library ieee;
 use ieee.std_Logic_1164.all;
 use ieee.std_logic_unsigned.all;
 
-entity Reciever is
+entity Receiver is
 port(
 rst,clk: in std_logic;
 Data_in: in std_logic;
@@ -122,10 +122,10 @@ Error: out std_logic := '0';
 flag: out std_logic);
 end;
 
-architecture one of Reciever is
+architecture one of Receiver is
 
 -- Component --
-component Reciever_sync
+component Receiver_sync
 port(
 rst,clk: in  	 std_logic;		-- clk is 50[MHz]
 rx:		in  	 std_logic;
@@ -133,7 +133,7 @@ UARTclk:	out 	 std_logic;
 En:		buffer std_logic);
 end component;
 
-component Reciever_Shift_Register
+component Receiver_Shift_Register
 generic (N: integer := 10);
 port(
 rst,clk: in std_logic;
@@ -147,8 +147,8 @@ signal UARTclk: std_logic;
 signal Q: std_logic_vector(9 downto 0);
 
 begin
-	U1: Reciever_Sync port map (rst,clk,Data_in,UARTclk,flag);
-	U2: Reciever_Shift_Register generic map (10) port map (rst,UARTclk,Data_in,Q);
+	U1: Receiver_Sync port map (rst,clk,Data_in,UARTclk,flag);
+	U2: Receiver_Shift_Register generic map (10) port map (rst,UARTclk,Data_in,Q);
 	Data_out <= Q(8 downto 1);
 end;
 
@@ -156,7 +156,7 @@ end;
 library ieee;
 use ieee.std_logic_1164.all;
 
-entity Reciever_Shift_Register is
+entity Receiver_Shift_Register is
 generic (N: integer := 10);
 port(
 rst,clk: in std_logic;
@@ -164,7 +164,7 @@ D: in std_logic;
 Q: buffer std_logic_vector(N-1 downto 0));
 end;
 
-architecture one of Reciever_Shift_Register is
+architecture one of Receiver_Shift_Register is
 begin
 	process(rst,clk)
 	begin
@@ -180,7 +180,7 @@ end;
 library ieee;
 use ieee.std_logic_1164.all;
 
-entity Reciever_sync is
+entity Receiver_sync is
 port(
 rst,clk: in  	 std_logic;		-- clk is 50[MHz]
 rx:		in  	 std_logic;
@@ -188,10 +188,10 @@ UARTclk:	out 	 std_logic;
 En:		buffer std_logic);
 end;
 
-architecture one of Reciever_Sync is
+architecture one of Receiver_Sync is
 
 -- Components --
-component Recieve_En_Sync
+component Receive_En_Sync
 port(
 rst:	in  	 std_logic;
 clk:	in  	 std_logic;
@@ -199,7 +199,7 @@ rx:	in 	 std_logic;
 flag:	buffer std_logic);
 end component;
 
-component Reciever_clk_Sync
+component Receiver_clk_Sync
 port (
 rst,clk: in  std_logic;
 En:		in  std_logic;
@@ -212,18 +212,18 @@ signal flag: std_logic;
 
 begin
 UARTclk <= sUARTclk;
-U1: Recieve_En_Sync  port map (rst,sUARTclk,rx,flag);
-U2: Reciever_clk_Sync port map (rst,clk,flag,sUARTclk);
+U1: Receive_En_Sync  port map (rst,sUARTclk,rx,flag);
+U2: Receiver_clk_Sync port map (rst,clk,flag,sUARTclk);
 En <= flag;
 end;
 
 
--- Reciever_En_Sync Module
+-- Receiver_En_Sync Module
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 
-entity Recieve_En_Sync is
+entity Receive_En_Sync is
 port(
 rst:	in  	 std_logic;
 clk:	in  	 std_logic;
@@ -231,7 +231,7 @@ rx:	in 	 std_logic;
 flag:	buffer std_logic);
 end;
 
-architecture one of Recieve_En_Sync is
+architecture one of Receive_En_Sync is
 signal counter: integer range 0 to 11 := 0;
 begin
 	process(rx,rst,clk)
@@ -260,18 +260,18 @@ begin
 	end process;
 end;
 
--- Reciever_clk_sync Module
+-- Receiver_clk_sync Module
 library ieee;
 use ieee.std_logic_1164.all;
 
-entity Reciever_clk_Sync is
+entity Receiver_clk_Sync is
 port (
 rst,clk: in  std_logic; -- clk - 50[MHz]
 En:		in  std_logic;
 UARTclk: out std_logic);
 end;
 
-architecture one of Reciever_clk_Sync is
+architecture one of Receiver_clk_Sync is
 signal clkdiv: integer range 0 to 5208 := 0;
 begin
 process(rst,En,clk)
@@ -319,13 +319,13 @@ component Transmitter
 port(
 	rst,clk: in std_logic;							-- 50[MHz] CLK signal
 	Data_in: in std_logic_vector(7 downto 0);
-	Data_out: out std_logic := '1';
+	Data_out: out std_logic := '1';pelling mistakes
 	Send: in std_logic;
 	EOF: out std_logic := '0'
 );
 end component;
 
-component Reciever
+component Receiver
 port(
 rst,clk: in std_logic;							-- 50[MHz] clk Signal
 Data_in: in std_logic;
@@ -337,5 +337,14 @@ end component;
 
 begin
 U1: Transmitter port map (rst,clk,Data_to_Send,tx,sendTrig,SendFlag);
-U2: Reciever 	 port map (rst,clk,rx,Data_Recieve,ErrorFlag);
+U2: Receiver 	 port map (rst,clk,rx,Data_Recieve,ErrorFlag);
 end;
+
+-- Simulation Reciever
+-- force rst 		1,0 500us
+-- force Data_in 	1,0 530us, 1 634.166us, 0 738.3333us, 1 1259.16666us, 0 1363.3333us, 1 1467.5us
+-- define clk (50MHz)
+-- run 2[msec]
+
+-- TB
+-- run 2[msec]
