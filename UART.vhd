@@ -119,7 +119,7 @@ rst,clk: in std_logic;
 Data_in: in std_logic;
 Data_out: out std_logic_vector(7 downto 0);
 Error: out std_logic := '0';
-flag: out std_logic);
+flag: buffer std_logic);
 end;
 
 architecture one of Receiver is
@@ -134,22 +134,45 @@ En:		buffer std_logic);
 end component;
 
 component Receiver_Shift_Register
-generic (N: integer := 10);
+generic (N: integer := 11);
 port(
 rst,clk: in std_logic;
 D: in std_logic;
 Q: buffer std_logic_vector(N-1 downto 0));
 end component;
 
+component UART_Register
+port(
+rst,clk: in std_logic;
+inpt: in std_logic_vector(7 downto 0);
+outpt:	out std_logic_vector(7 downto 0));
+end component;
+
 -- Component --
 
 signal UARTclk: std_logic;
 signal Q: std_logic_vector(9 downto 0);
+signal sflag: std_logic;
+
+signal SR_rst: std_logic;
 
 begin
+	SR_rst <= rst OR (not sflag);
 	U1: Receiver_Sync port map (rst,clk,Data_in,UARTclk,flag);
-	U2: Receiver_Shift_Register generic map (10) port map (rst,UARTclk,Data_in,Q);
-	Data_out <= Q(8 downto 1);
+	U2: Receiver_Shift_Register generic map (10) port map (SR_rst,UARTclk,Data_in,Q);
+	U3: UART_Register port map (rst,flag,Q(8 downto 1),Data_out);
+	process(rst,clk)
+	begin
+		if (rst = '1') then
+			sflag <= '1';
+		elsif (UARTclk 'event and UARTclk = '1') then
+			if (flag = '1') then
+				sflag <= '1';
+			elsif (sflag = '1' and flag = '0') then
+				sflag <= '0';
+			end if;
+		end if;
+	end process;
 end;
 
 -- Reciever Shift Register Module
@@ -253,7 +276,7 @@ begin
 				counter <= 0;
 			end if;
 		end if;
-		if (counter = 11) then
+		if (counter = 10) then
 			counter <= 0;
 			flag <= '0';
 		end if;
@@ -308,9 +331,9 @@ rst,clk: in std_logic;							-- 50[MHz] clk Signal
 rx: in std_logic;
 tx: out std_logic;
 sendTrig: in std_logic;							-- When sendTrig rising edge the transmitter start working
-SendFlag,ErrorFlag: out std_logic;			-- when SendFlag rising edge the transmitter finish send the data (1[Byte])
+SendFlag,RxFlag,ErrorFlag: buffer std_logic;			-- when SendFlag rising edge the transmitter finish send the data (1[Byte])
 Data_to_Send: in  std_logic_vector(7 downto 0);
-Data_Recieve: out std_logic_vector(7 downto 0));
+Data_Receive: out std_logic_vector(7 downto 0));
 end;
 
 architecture one of UART is
@@ -327,17 +350,23 @@ end component;
 
 component Receiver
 port(
-rst,clk: in std_logic;							-- 50[MHz] clk Signal
+rst,clk: in std_logic;
 Data_in: in std_logic;
 Data_out: out std_logic_vector(7 downto 0);
-Error: out std_logic
-);
+Error: out std_logic := '0';
+flag: out std_logic);
 end component;
 
+component UART_Register
+port(
+rst,clk: in std_logic;
+inpt: in std_logic_vector(7 downto 0);
+outpt:	out std_logic_vector(7 downto 0));
+end component;
 
 begin
 U1: Transmitter port map (rst,clk,Data_to_Send,tx,sendTrig,SendFlag);
-U2: Receiver 	 port map (rst,clk,rx,Data_Recieve,ErrorFlag);
+U2: Receiver 	 port map (rst,clk,rx,Data_Receive,ErrorFlag,RxFlag);
 end;
 
 -- Simulation Reciever
@@ -348,3 +377,27 @@ end;
 
 -- TB
 -- run 2[msec]
+
+
+-- UART_Register Module
+library ieee;
+use ieee.std_logic_1164.all;
+
+entity UART_Register is
+port(
+rst,clk: in std_logic;
+inpt: in std_logic_vector(7 downto 0);
+outpt:	out std_logic_vector(7 downto 0));
+end;
+
+architecture one of UART_Register is
+begin
+	process(rst,clk)
+	begin
+		if (rst = '1') then
+			outpt <= (others => '0');
+		elsif (clk 'event and clk = '0') then
+			outpt <= inpt;
+		end if;
+	end process;
+end;
