@@ -18,7 +18,7 @@ architecture one of FPU is
 	component Shift_reg
 	port(
 		input:	in	std_logic_vector(23 downto 0);
-		sel:	in	std_logic_vector(4  downto 0);
+		sel:	in	std_logic_vector(7  downto 0);
 		output:	out	std_logic_vector(23 downto 0));
 	end component;
 
@@ -38,7 +38,7 @@ architecture one of FPU is
 	signal shiftvec:	std_logic_vector(23 downto 0);
 	signal shifts:		std_logic_vector(7 downto 0);
 	
-	signal intern_Result:	std_logic_vector(23 downto 0);
+	signal intern_Result:	std_logic_vector(24 downto 0);
 begin
 
 	Result(31) <= Sig_A xor Sig_B;
@@ -56,22 +56,29 @@ begin
 	
 	U1: Shift_reg port map (
 		input => vec2shift,
-		sel => shifts(4 downto 0),
+		sel => shifts,
 		output => shiftvec);
 	
-	process(Exp_A,Exp_B,intern_A,intern_B,shiftvec)
+	process(Exp_A,Exp_B,Man_A,Man_B,A,B,shiftvec,intern_Result)
 	begin
 		if (Exp_A > Exp_B) then
 			Result(30 downto 23) <= Exp_A;
 			shifts <= Exp_A - Exp_B;
 			vec2shift <= intern_B;
-			intern_Result <= shiftvec + intern_A;
+			intern_Result <= ('0' & shiftvec) + ('0' & intern_A);
+			Result(22 downto 0) <= intern_Result(22 downto 0);
 		else
-			Result(30 downto 23) <= Exp_B;
 			shifts <= Exp_B - Exp_A;
 			vec2shift <= intern_A;
-			intern_Result <= shiftvec + intern_B;
+			intern_Result <= ('0' & shiftvec) + ('0' & intern_B);
+			if (intern_Result(24) = '1') then
+				Result(30 downto 23) <= Exp_B+1;
+				Result(22 downto 0) <= intern_Result(23 downto 1);
+			else
+				Result(30 downto 23) <= Exp_B;
+				Result(22 downto 0) <= intern_Result(22 downto 0);
+			end if;
 		end if;
 	end process;
-	Result(22 downto 0) <= intern_Result(22 downto 0);
+	
 end;
