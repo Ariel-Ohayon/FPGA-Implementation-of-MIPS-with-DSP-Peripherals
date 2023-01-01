@@ -1,3 +1,4 @@
+`timescale 10us/1us;
 module TB_FPU ();
 	reg 	[31:0]	T_A;
 	reg		[31:0]	T_B;
@@ -10,7 +11,16 @@ module TB_FPU ();
 	
 	initial
 	begin
+		T_A = 32'h3FC00000;
+		T_B = 32'h40500000;
+		#1;
 		T_A = 32'h420F0000;
+		T_B = 32'h31A40000;
+		#1;
 		T_B = 32'h41A40000;
+		#1;
+		T_A = 32'h42300000;
+		T_B = 32'h43a40000;
+		#1;
 	end
 endmodule
