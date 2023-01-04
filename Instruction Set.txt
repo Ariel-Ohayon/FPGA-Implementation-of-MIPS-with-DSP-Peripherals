@@ -1,0 +1,95 @@
+R-Type Instruction
+
+												Format:
+
+-------------------------------------------------------------------------------------------------------------
+|					|				|				|				|					|					|
+|					|				|				|				|					|					|
+|	OPCODE 6[Bits]	|	rs 5[Bits]	|	rt 5[Bits]	|	rd 5[Bits]	|	shamt 5[Bits]	|	Funct 6[Bits]	|
+|					|				|				|				|					|					|
+|					|				|				|				|					|					|
+-------------------------------------------------------------------------------------------------------------
+
+OPCODE field always 000000[BIN] for R-Type Instruction.
+
+The Fields rs and rt in the format get the register address for the register that the programmer want to read.
+
+The Field rd in the format get the register address for the register that the programmer want to write.
+
+IF the operation in the instruction is shift operation the "shamt"
+field get the number of shifts that define in the instruction.
+OTHERWISE this field get the value 00000[BIN]
+
+The Func Field Represent the operation type that the programmer want to do in this instruction.
+
+
+
+I - Type Instruction
+
+								Format:
+
+-------------------------------------------------------------------------------------
+|					|				|				|								|
+|					|				|				|								|
+|	OPCODE 6[Bits]	|	rs 5[Bits]	|	rt 5[Bits]	|	immediate/address 16[Bits]	|
+|					|				|				|								|
+|					|				|				|								|
+-------------------------------------------------------------------------------------
+
+
+
+// ---------------------------------------- Instruction Set ---------------------------------------- \\
+
+	Operation	|	Instruction Type	|	OP-Code	|	Func	|	Example			|	Example Description
+	
+	ADD			|		R-Type			|	000000	|	000100	|	ADD	R1,R2,R3	|	R1 <- R2 + R3
+	SUB			|		R-Type			|	000000	|	000101	|	SUB R1,R2,R3	|	R1 <- R2 - R3
+	MUL			|		R-Type			|	000000	|	000110	|	MUL R1,R2,R3	|	R1 <- R2 * R3 (Multiply)
+	DIV			|		R-Type			|	000000	|	000111	|	DIV	R1,R2,R3	|	R1 <- R2 / R3 (Division)
+	
+	AND			|		R-Type			|	000000	|	001000	|	AND R1,R2,R3	|	R1 <- R2 & R3
+	OR			|		R-Type			|	000000	|	001001	|	OR	R1,R2,R3	|	R1 <- R2 | R3
+	NOR			|		R-Type			|	000000	|	001010	|	NOR R1,R2,R3	|	R1 <- ~ (R2 | R3)
+	XOR			|		R-Type			|	000000	|	001011	|	XOR R1,R2,R3	|	R1 <- R2 ^ R3
+	
+	ADDI		|		I-Type			|	000100	|	------	|	ADDI R1,R2,imm	|	R1 <- R2 + imm
+	SUBI		|		I-Type			|	000101	|	------	|	SUBI R1,R2,imm	|	R1 <- R2 - imm
+	MULI		|		I-Type			|	000110	|	------	|	MULI R1,R2,imm	|	R1 <- R2 * imm
+	DIVI		|		I-Type			|	000111	|	------	|	DIVI R1,R2,imm	|	R1 <- R2 / imm
+	
+	ANDI		|		I-Type			|	001000	|	------	|	ANDI R1,R2,imm	|	R1 <- R2 & imm
+	ORI			|		I-Type			|	001001	|	------	|	ORI	 R1,R2,imm	|	R1 <- R2 | imm
+	NORI		|		I-Type			|	001010	|	------	|	NORI R1,R2,imm	|	R1 <- ~ (R2 | imm)
+	XORI		|		I-Type			|	001011	|	------	|	XORI R1,R2,imm	|	R1 <- R2 ^ imm
+	
+	BEQ			|		I-Type			|	001100	|	------	|	BEQ R1,R2,Label	|	branch to Label if (R1 == R2)
+	BNE			|		I-Type			|	001101	|	------	|	BNE R1,R2,Label	|	branch to Label if (R1 != R2)
+	BGT			|		I-Type			|	001110	|	------	|	BGT R1,R2,Label	|	branch to Label if (R1 > R2)
+	BLE			|		I-Type			|	001111	|	------	|	BLE R1,R2,Label	|	branch to Label if (R1 < R2)
+	
+	LDW			|		I-Type			|	000001	|	------	|	LDW R1,off(R2)	|	R1 <- Data_MEM[R2+off] (Load Word)
+	STW			|		I-Type			|	000010	|	------	|	STW R1,off(R2)	|	Data_MEM[R2+off] <- R1 (Store Word)
+	
+	ADDF		|		R-Type			|	000000	|	000000	|	ADDF R1,R2,R3	|	R1 <- R2 + R3 (IEEE-754 - float)
+	SUBF		|		R-Type			|	000000	|	000001	|	SUBF R1,R2,R3	|	R1 <- R2 - R3 (IEEE-754 - float)
+	MULF		|		R-Type			|	000000	|	000010	|	MULF R1,R2,R3	|	R1 <- R2 * R3 (IEEE-754 - float)
+	DIVF		|		R-Type			|	000000	|	000011	|	DIVF R1,R2,R3	|	R1 <- R2 / R3 (IEEE-754 - float)
+	
+if (Op-Code == "000000") => R-Type
+else => I-Type
+
+// ---------------------------------------- Instruction Set ---------------------------------------- \\
+
+
+
+Need to add trigonometry operations
+Need to add the operations for the HW below:
+The HW of the Execution stage includes:
+- ALU-IU  (Arithmetic Logic Unit for unsigned integer calculation)
+- ALU-FPU (Arithmetic Logic Unit for IEEE-754 floating point calculation)
+- TMU (Trigonometric Math Unit)
+- FIR (DSP Filter Type of Finite Impule Response) <--
+- NCO (Numerically Controlled Oscillator)			 |
+- Modulator (Create Modulations signals)			 |
+- MCU (Matrix Calculation Unit)						 |
+- HW for convolution operation (there is in FIR)-----
