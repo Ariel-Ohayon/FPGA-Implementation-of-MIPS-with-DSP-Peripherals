@@ -27,11 +27,13 @@ Reg Address	|	Name			|	Usage
 25			|	R25				|	Temporary Data Register
 26			|	R26				|	Temporary Data Register
 27			|	R27				|	Temporary Data Register
-28			|	R28				|	Temporary Data Register
-29			|	R29				|	Temporary Data Register
+28			|	BusRegR			|	Register for Read data from the Peripheral Bus (if needed)
+29			|	BUSRegW			|	Register for Control the Peripheral Bus
 30			|	ra				|	Return Address Register
 31			|	sp				|	Stack Pointer Register
 
 
 
 Every register has 5[Bits] Address (number of registers = 2^5 = 32)
+
+size of the registers: 32[Bits]

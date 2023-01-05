@@ -1,0 +1,19 @@
+This document will define the communication protocol between the CPU and the peripherals.
+
+
+
+
+	// ----------- Peripherals: ----------- \\
+
+Need to add trigonometry operations
+Need to add the operations for the HW below:
+The HW of the Execution stage includes:
+- TMU (Trigonometric Math Unit)
+- FIR (DSP Filter Type of Finite Impule Response) <--
+- NCO (Numerically Controlled Oscillator)			 |
+- Modulator (Create Modulations signals)			 |
+- MCU (Matrix Calculation Unit)						 |
+- HW for convolution operation (there is in FIR)-----
+
+	// ----------- Peripherals: ----------- \\
+
