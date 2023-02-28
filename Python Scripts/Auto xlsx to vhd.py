@@ -137,47 +137,55 @@ def main():
                 f.write(',\n')
         f.write('\n')
 
+    df_Source_Signal = pd.DataFrame(File_Excel,columns = ['Source_Signal']).dropna()
+    df_Destin_Signal = pd.DataFrame(File_Excel,columns = ['Destination_Signal']).dropna()
+    
+    for i in df_Source_Signal.index:
+        f.write(f'\t{df_Destin_Signal.iloc[i,0]} <= {df_Source_Signal.iloc[i,0]};\n')
     
     f.write('end;\n\n')
     
-    #End of Program#
-    indexes_num = df_SubModules.index.to_numpy()
-    df_SubModules_Ports = pd.DataFrame(File_Excel,columns = ['Ports.1'])
-    df_SubModules_Ports = df_SubModules_Ports.dropna()
-    port_index = df_SubModules_Ports.index.to_numpy()
-    val = port_index[len(port_index)-1]+1
-    indexes_num = np.insert(indexes_num,len(indexes_num),val)
+    wa = input('Do you want that I will write you the architecture of the Sub Modules?[y/n] ') # wa = write architecture
     
-    start = 0
-    for i in df_SubModules_rst_index.index:
-        f.write(f'-- SubModule: {df_SubModules_rst_index.iloc[i,0]} --\n\n')
-        f.write('library ieee;\n')
-        f.write('use ieee.std_logic_1164.all;\n\n')
-        f.write(f'entity {df_SubModules_rst_index.iloc[i,0]} is\n') # Enter name of component
-        f.write('port(\n')
-        end = indexes_num[i+1]
-        for j in range(start,end):
-            start = start + 1
-            f.write(f'\t{df_SubModules_Ports.iloc[j,0]}:')
-            f.write(f'{df_SubModule_Dir.iloc[j,0]}')
-            if (df_SubModules_Bits.iloc[j,0] == 1):
-                f.write('\tstd_logic')
-                if (j == end-1):
-                    f.write(');\n')
+    if (wa == 'y'):
+        #End of Program#
+        indexes_num = df_SubModules.index.to_numpy()
+        df_SubModules_Ports = pd.DataFrame(File_Excel,columns = ['Ports.1'])
+        df_SubModules_Ports = df_SubModules_Ports.dropna()
+        port_index = df_SubModules_Ports.index.to_numpy()
+        val = port_index[len(port_index)-1]+1
+        indexes_num = np.insert(indexes_num,len(indexes_num),val)
+    
+        start = 0
+        for i in df_SubModules_rst_index.index:
+            f.write(f'-- SubModule: {df_SubModules_rst_index.iloc[i,0]} --\n\n')
+            f.write('library ieee;\n')
+            f.write('use ieee.std_logic_1164.all;\n\n')
+            f.write(f'entity {df_SubModules_rst_index.iloc[i,0]} is\n') # Enter name of component
+            f.write('port(\n')
+            end = indexes_num[i+1]
+            for j in range(start,end):
+                start = start + 1
+                f.write(f'\t{df_SubModules_Ports.iloc[j,0]}:')
+                f.write(f'{df_SubModule_Dir.iloc[j,0]}')
+                if (df_SubModules_Bits.iloc[j,0] == 1):
+                    f.write('\tstd_logic')
+                    if (j == end-1):
+                        f.write(');\n')
+                    else:
+                        f.write(';\n')
                 else:
-                    f.write(';\n')
-            else:
-                f.write(f'\tstd_logic_vector({int(df_SubModules_Bits.iloc[j,0])-1} downto 0)')
-                if (j == end-1):
-                    f.write(');\n')
-                else:
-                    f.write(';\n')
-        f.write('end;\n\n')
+                    f.write(f'\tstd_logic_vector({int(df_SubModules_Bits.iloc[j,0])-1} downto 0)')
+                    if (j == end-1):
+                        f.write(');\n')
+                    else:
+                        f.write(';\n')
+            f.write('end;\n\n')
         
-        f.write(f'architecture one of {df_SubModules_rst_index.iloc[i,0]} is\n')
-        f.write('begin\n\n')
-        f.write('end;\n\n')
-    #End of Program#
+            f.write(f'architecture one of {df_SubModules_rst_index.iloc[i,0]} is\n')
+            f.write('begin\n\n')
+            f.write('end;\n\n')
+        #End of Program#
     
     f.close()
     
