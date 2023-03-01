@@ -1,7 +1,5 @@
 def main():
-    
-    function = list('xxxxxxx')
-    
+
     data = 6
     
     filename = input('Enter file name: ')
@@ -10,7 +8,7 @@ def main():
     line_number = 0
     
     for line in fr:
-    
+        function = list('xxxxxxx')
         line_number = line_number + 1
         #print(line)
         
@@ -20,8 +18,7 @@ def main():
         x=0
         while(line[x] != ' '):
             function[x] = line[x]
-            x=x+1
-        
+            x = x + 1
         if(function == list('ADDxxxx')):
             data = R_Type_Encode(line)
         elif(function == list('SUBxxxx')):
@@ -424,9 +421,108 @@ def J_Type_Encode(cmd):
     return Encode_cmd
     
 def BR_Encode(cmd):
-    return 3
+
+    rs = 0
+    rt = 0
+    imm = 0
+    
+    function = ''
+    # copy #
+    # -- / Calculating function \ --#
+    x = 0
+    while(cmd[x] != ' '):
+        function += cmd[x]
+        x = x + 1
+    # -- / Calculating function \ --#
+    # copy #
+    x += 2
+    
+    while(cmd[x] != ','):
+        rs += int(cmd[x])
+        rs *= 10
+        x += 1
+    rs /= 10
+    rs = int(rs)
+    
+    x += 2
+    while(cmd[x] != ','):
+        rt += int(cmd[x])
+        rt *= 10
+        x += 1
+    rt /= 10
+    rt = int(rt)
+    
+    x += 1
+    for i in range(x,len(cmd)):
+        if (cmd[i] == '\n'):
+            break
+        imm += int(cmd[i])
+        imm *= 10
+    imm /= 10
+    imm = int(imm)
+    
+    if(function == 'BEQ'):
+        opcode = 12
+    elif(function == 'BNE'):
+        opcode = 13
+    elif(function == 'BGT'):
+        opcode = 14
+    elif(function == 'BLE'):
+        opcode = 15
+    
+    Encode_cmd = (rs*(2**21)) + (rt*(2**16)) + (opcode*(2**26)) + imm
+
+    
+    return Encode_cmd
+    
 def MEM_Encode(cmd):
-    return 4
+    
+    function = ''
+    rs = 0
+    rt = 0
+    imm = 0
+    # copy #
+    # -- / Calculating function \ --#
+    x = 0
+    while(cmd[x] != ' '):
+        function += cmd[x]
+        x = x + 1
+    # -- / Calculating function \ --#
+    # copy #
+    x += 2
+    
+    while(cmd[x] != ','):
+        rs += int(cmd[x])
+        rs *= 10
+        x += 1
+    rs /= 10
+    rs = int(rs)
+    
+    x += 1
+    while(cmd[x] != '('):
+        imm += int(cmd[x])
+        imm *= 10
+        x += 1
+    imm /= 10
+    imm = int(imm)
+    
+    x += 2
+    while(cmd[x] != ')'):
+        rt += int(cmd[x])
+        rt *= 10
+        x += 1
+    rt /= 10
+    rt = int(rt)
+    
+    if (function == 'LDW'):
+        opcode = 1
+    elif(function == 'STW'):
+        opcode = 2
+    
+    Encode_cmd = (opcode*(2**26)) + (rs*(2**21)) + (rt*(2**16)) + imm
+    
+    return Encode_cmd
+    
 def BUS_Type_Encode(cmd):
     return 5
     
