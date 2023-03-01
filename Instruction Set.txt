@@ -1,7 +1,7 @@
 R-Type Instruction
 
 												Format:
-
+ 31				  26 25			  21 20			  16 15			  11 10				  6  5					0
 -------------------------------------------------------------------------------------------------------------
 |		CONST		|				|				|				|					|					|
 |					|				|				|				|					|					|
@@ -27,7 +27,7 @@ The Func Field Represent the operation type that the programmer want to do in th
 I - Type Instruction
 
 								Format:
-
+31				  26|25			  21|20			  16|15								0
 -------------------------------------------------------------------------------------
 |					|				|				|								|
 |					|				|				|								|
@@ -35,18 +35,18 @@ I - Type Instruction
 |					|				|				|								|
 |					|				|				|								|
 -------------------------------------------------------------------------------------
-
-
-J - Type Instruction
-
-								Format:
-
+													
+													
+J - Type Instruction								
+													
+								Format:				
+													
 -------------------------------------------------------------------------------------
-|					|																|
-|					|																|
-|	OPCODE 6[Bits]	|							address 26[Bits]					|
-|					|																|
-|					|																|
+|					|								|								|
+|					|								|								|
+|	OPCODE 6[Bits]	|				XXX				|		Address 16[Bits]		|
+|					|								|								|
+|					|								|								|
 -------------------------------------------------------------------------------------
 
 
@@ -66,7 +66,7 @@ BUS - Type Instruction
 
 // ---------------------------------------- Instruction Set ---------------------------------------- \\
 
-	Operation	|	Instruction Type	|	OP-Code	|	Func	|	Example			|	Example Description
+	Operation	|	Instruction Type	|	OP-Code	|	Funct	|	Example			|	Example Description
 	
 	ADD			|		R-Type			|	000000	|	000100	|	ADD	R1,R2,R3	|	R1 <- R2 + R3			 - Sign
 	SUB			|		R-Type			|	000000	|	000101	|	SUB R1,R2,R3	|	R1 <- R2 - R3			 - Sign
@@ -93,30 +93,30 @@ BUS - Type Instruction
 	MULI		|		I-Type			|	000110	|	------	|	MULI R1,R2,imm	|	R1 <- R2 * imm (16LSB) - Sign
 	DIVI		|		I-Type			|	000111	|	------	|	DIVI R1,R2,imm	|	R1 <- R2 / imm (16LSB) - Sign
 	
-	ADDIU		|		I-Type			|	010100	|	------	|	ADDI R1,R2,imm	|	R1 <- R2 + imm (16LSB) - Unsign
-	SUBIU		|		I-Type			|	010101	|	------	|	SUBI R1,R2,imm	|	R1 <- R2 - imm (16LSB) - Unsign
-	MULIU		|		I-Type			|	010110	|	------	|	MULI R1,R2,imm	|	R1 <- R2 * imm (16LSB) - Unsign
-	DIVIU		|		I-Type			|	010111	|	------	|	DIVI R1,R2,imm	|	R1 <- R2 / imm (16LSB) - Unsign
+	ADDUI		|		I-Type			|	010100	|	------	|	ADDI R1,R2,imm	|	R1 <- R2 + imm (16LSB) - Unsign
+	SUBUI		|		I-Type			|	010101	|	------	|	SUBI R1,R2,imm	|	R1 <- R2 - imm (16LSB) - Unsign
+	MULUI		|		I-Type			|	010110	|	------	|	MULI R1,R2,imm	|	R1 <- R2 * imm (16LSB) - Unsign
+	DIVUI		|		I-Type			|	010111	|	------	|	DIVI R1,R2,imm	|	R1 <- R2 / imm (16LSB) - Unsign
 	
-	ADDIH		|		I-Type			|	100100	|	------	|	ADDI R1,R2,imm	|	R1 <- R2 + imm (16MSB) - Sign
-	SUBIH		|		I-Type			|	100101	|	------	|	SUBI R1,R2,imm	|	R1 <- R2 - imm (16MSB) - Sign
-	MULIH		|		I-Type			|	100110	|	------	|	MULI R1,R2,imm	|	R1 <- R2 * imm (16MSB) - Sign
-	DIVIH		|		I-Type			|	100111	|	------	|	DIVI R1,R2,imm	|	R1 <- R2 / imm (16MSB) - Sign
+	ADDHI		|		I-Type			|	100100	|	------	|	ADDI R1,R2,imm	|	R1 <- R2 + imm (16MSB) - Sign
+	SUBHI		|		I-Type			|	100101	|	------	|	SUBI R1,R2,imm	|	R1 <- R2 - imm (16MSB) - Sign
+	MULHI		|		I-Type			|	100110	|	------	|	MULI R1,R2,imm	|	R1 <- R2 * imm (16MSB) - Sign
+	DIVHI		|		I-Type			|	100111	|	------	|	DIVI R1,R2,imm	|	R1 <- R2 / imm (16MSB) - Sign
 	
-	ADDIUH		|		I-Type			|	110100	|	------	|	ADDI R1,R2,imm	|	R1 <- R2 + imm (16MSB) - Unsign
-	SUBIUH		|		I-Type			|	110101	|	------	|	SUBI R1,R2,imm	|	R1 <- R2 - imm (16MSB) - Unsign
-	MULIUH		|		I-Type			|	110110	|	------	|	MULI R1,R2,imm	|	R1 <- R2 * imm (16MSB) - Unsign
-	DIVIUH		|		I-Type			|	110111	|	------	|	DIVI R1,R2,imm	|	R1 <- R2 / imm (16MSB) - Unsign
+	ADDUHI		|		I-Type			|	110100	|	------	|	ADDI R1,R2,imm	|	R1 <- R2 + imm (16MSB) - Unsign
+	SUBUHI		|		I-Type			|	110101	|	------	|	SUBI R1,R2,imm	|	R1 <- R2 - imm (16MSB) - Unsign
+	MULUHI		|		I-Type			|	110110	|	------	|	MULI R1,R2,imm	|	R1 <- R2 * imm (16MSB) - Unsign
+	DIVUHI		|		I-Type			|	110111	|	------	|	DIVI R1,R2,imm	|	R1 <- R2 / imm (16MSB) - Unsign
 	
 	ANDI		|		I-Type			|	001000	|	------	|	ANDI R1,R2,imm	|	R1 <- R2 & imm 	   (16LSB)
 	ORI			|		I-Type			|	001001	|	------	|	ORI	 R1,R2,imm	|	R1 <- R2 | imm 	   (16LSB)
 	NORI		|		I-Type			|	001010	|	------	|	NORI R1,R2,imm	|	R1 <- ~ (R2 | imm) (16LSB)
 	XORI		|		I-Type			|	001011	|	------	|	XORI R1,R2,imm	|	R1 <- R2 ^ imm	   (16LSB)
 	
-	ANDIH		|		I-Type			|	101000	|	------	|	ANDI R1,R2,imm	|	R1 <- R2 & imm 	   (16MSB)
-	ORIH		|		I-Type			|	101001	|	------	|	ORI	 R1,R2,imm	|	R1 <- R2 | imm 	   (16MSB)
-	NORIH		|		I-Type			|	101010	|	------	|	NORI R1,R2,imm	|	R1 <- ~ (R2 | imm) (16MSB)
-	XORIH		|		I-Type			|	101011	|	------	|	XORI R1,R2,imm	|	R1 <- R2 ^ imm	   (16MSB)
+	ANDHI		|		I-Type			|	101000	|	------	|	ANDI R1,R2,imm	|	R1 <- R2 & imm 	   (16MSB)
+	ORHI		|		I-Type			|	101001	|	------	|	ORI	 R1,R2,imm	|	R1 <- R2 | imm 	   (16MSB)
+	NORHI		|		I-Type			|	101010	|	------	|	NORI R1,R2,imm	|	R1 <- ~ (R2 | imm) (16MSB)
+	XORHI		|		I-Type			|	101011	|	------	|	XORI R1,R2,imm	|	R1 <- R2 ^ imm	   (16MSB)
 	
 	BEQ			|		I-Type			|	001100	|	------	|	BEQ R1,R2,Label	|	branch to Label if (R1 == R2)
 	BNE			|		I-Type			|	001101	|	------	|	BNE R1,R2,Label	|	branch to Label if (R1 != R2)
@@ -136,7 +136,7 @@ BUS - Type Instruction
 	RET			|		J-Type			|	111101	|	------	|	RET				|	PC <- STACK[sp], ra <- ra - 4
 	
 	PERBUSW		|		BUS-Type		|	111000	|	------	|	PERBUS SFRx,imm	|	BUSRegW <- concat(ADDR,DATA) En Write to Bus
-	PERBUSR		|		BUS-Type		|	111001	|	------	|	PERBUS SFRx,imm	|	BUSRegW <- concat(ADDR,DATA) En Read from Bus
+	PERBUSR		|		BUS-Type		|	111001	|	------	|	PERBUS SFRx,Rx	|	BUSRegW <- concat(ADDR,DATA) En Read from Bus
 // ---------------------------------------- Instruction Set ---------------------------------------- \\
 
 
@@ -169,3 +169,8 @@ elsif	(Op-Code(5 downto 2) == "1010") => imm
 // --------------------------------------- Rules -------------------------------------------------- //
 
 
+PERBUSW - the first parameter is address of SFR (*) the second parameter is immediate parameter.
+PERBUSR - the first parameter is address of SFR (*) the second parameter is CPU Register that will get the data from the SFR.
+
+
+(*)SFRx - address of the special function register
