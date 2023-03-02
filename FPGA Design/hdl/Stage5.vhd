@@ -3,62 +3,60 @@ use ieee.std_logic_1164.all;
 
 entity Stage5 is
 port(
-	clk:	in	std_logic;	-- No need to use right now
-	reset:	in	std_logic;	-- No need to use right now
-	-- Inputs from stage 4:
-	stage4_WB_FPU_result:		in	std_logic_vector(31 downto 0);
-	stage4_WB_ALU_result:		in	std_logic_vector(31 downto 0);
-	stage4_WB_Data_Memory:		in	std_logic_vector(31 downto 0);
-	stage4_WB_Register_addr:	in	std_logic_vector(4  downto 0);
-	stage4_WB_Write_Register:	in	std_logic;
-	stage4_WB_MUX:				in	std_logic_vector(1  downto 0);
-	
-	-- Output for stage2:
-	stage2_WB_Write_Register:	out	std_logic;						-- To Enable Write function to Register
-	stage2_Register_data:		out	std_logic_vector(31 downto 0);	-- Send the data to the Register
-	stage2_Register_addr:		out	std_logic_vector(4  downto 0));	-- Send the address of the Register.
+	clk:	in	std_logic;
+	reset:	in	std_logic;
+	Memory_Data:	in	std_logic_vector(31 downto 0);
+	ALU_Data:	in	std_logic_vector(31 downto 0);
+	Reg_Write_En_in:	in	std_logic;
+	WB_Mux_sel:	in	std_logic;
+	Addr_Write_Reg_in:	in	std_logic_vector(4 downto 0);
+	Reg_Write_En_out:	out	std_logic;
+	Addr_Write_Reg_out:	out	std_logic_vector(4 downto 0);
+	Reg_Write_Data_out:	out	std_logic_vector(31 downto 0));
 end;
 
 architecture one of Stage5 is
 
 	-- / Components \ --
-	component WB_Reg_MUX
+	component WB_MUX_module
 	port(
-		ALU_in:	in	std_logic_vector(31 downto 0);
-		FPU_in:	in	std_logic_vector(31 downto 0);
-		MEM_in:	in	std_logic_vector(31 downto 0);
-		sel:	in	std_logic_vector(1  downto 0);
-		WB_out:	out	std_logic_vector(31 downto 0));
+		Mem_Data:	in	std_logic_vector(31 downto 0);
+		ALU_Data:	in	std_logic_vector(31 downto 0);
+		REG_Data:	out	std_logic_vector(31 downto 0);
+		selector:	in	std_logic);
 	end component;
 	-- / Components \ --
 
+	-- / Signals\ --
+	-- / Signals \ --
+
 begin
-	
-	stage2_Register_addr 		<=	stage4_WB_Register_addr;
-	stage2_WB_Write_Register	<=	stage4_WB_Write_Register;
-	
-	U1:	WB_Reg_MUX port map (
-		ALU_in	=>	stage4_WB_ALU_result,
-		FPU_in	=>	stage4_WB_FPU_result,
-		MEM_in	=>	stage4_WB_Data_Memory,
-		sel		=>	stage4_WB_MUX,
-		WB_out	=>	stage2_Register_data);
+	U1: WB_MUX_module port map(
+			Mem_Data	=>	Memory_Data,
+			ALU_Data	=>	ALU_Data,
+			REG_Data	=>	Reg_Write_Data_out,
+			selector	=>	WB_Mux_sel);
+
+	Addr_Write_Reg_out <= Addr_Write_Reg_in;
+	Reg_Write_En_out <= Reg_Write_En_in;
 end;
 
---
+-- SubModule: WB_MUX_module --
 
 library ieee;
 use ieee.std_logic_1164.all;
 
-entity WB_Reg_MUX is
+entity WB_MUX_module is
 port(
-	ALU_in:	in	std_logic_vector(31 downto 0);
-	FPU_in:	in	std_logic_vector(31 downto 0);
-	MEM_in:	in	std_logic_vector(31 downto 0);
-	sel:	in	std_logic_vector(1  downto 0);
-	WB_out:	out	std_logic_vector(31 downto 0));
+	Mem_Data:in	std_logic_vector(31 downto 0);
+	ALU_Data:in	std_logic_vector(31 downto 0);
+	REG_Data:out	std_logic_vector(31 downto 0);
+	selector:in	std_logic);
 end;
 
-architecture one of WB_Reg_MUX is
+architecture one of WB_MUX_module is
 begin
+	REG_Data <= Mem_Data when(selector = '1') else
+				ALU_Data;
 end;
+
