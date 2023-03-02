@@ -71,9 +71,11 @@ architecture one of Stage1 is
 	signal Addr_inpt:	std_logic_vector(11 downto 0);
 	signal Instruction:	std_logic_vector(31 downto 0);
 	signal PC_next:	std_logic_vector(11 downto 0);
+	signal n_clk: std_logic;
 	-- / Signals \ --
 
 begin
+	n_clk <= not clk;
 	U1: PC_Register port map(
 			reset	=>	reset,
 			En	=>	En_Pipeline,
@@ -87,7 +89,7 @@ begin
 			outpt	=>	PC_in);
 
 	U3: Instruction_Memory port map(
-			clk	=>	not clk,
+			clk	=>	n_clk,
 			address	=>	Addr_inpt,
 			data_in	=>	Instruction_Data,
 			data_out	=>	Instruction,
