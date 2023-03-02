@@ -53,7 +53,7 @@ J - Type Instruction
 BUS - Type Instruction
 
 								Format:
-
+31				  26|25							  16|15								0
 -------------------------------------------------------------------------------------
 |		CONST		|								|								|
 |					|								|								|
@@ -135,8 +135,8 @@ BUS - Type Instruction
 	CALL		|		J-Type			|	111110	|	------	|	CALL Label		|	PC <- ADDR of instruction MEM (sp,ra)
 	RET			|		J-Type			|	111101	|	------	|	RET				|	PC <- STACK[sp], ra <- ra - 4
 	
-	PERBUSW		|		BUS-Type		|	111000	|	------	|	PERBUS SFRx,imm	|	BUSRegW <- concat(ADDR,DATA) En Write to Bus
-	PERBUSR		|		BUS-Type		|	111001	|	------	|	PERBUS SFRx,Rx	|	BUSRegW <- concat(ADDR,DATA) En Read from Bus
+	PERBUSW		|		BUS-Type		|	111000	|	------	|	PERBUSW SFRx,imm|	BUSRegW <- concat(ADDR,DATA) En Write to Bus
+	PERBUSR		|		BUS-Type		|	111001	|	------	|	PERBUSR SFRx,Rx	|	BUSRegW <- concat(ADDR,DATA) En Read from Bus
 // ---------------------------------------- Instruction Set ---------------------------------------- \\
 
 
