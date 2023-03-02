@@ -71,14 +71,14 @@ architecture one of Stage1 is
 	signal Addr_inpt:	std_logic_vector(11 downto 0);
 	signal Instruction:	std_logic_vector(31 downto 0);
 	signal PC_next:	std_logic_vector(11 downto 0);
-	signal n_clk: std_logic;
+	signal n_clk:	std_logic;
+	signal En_Stage1:	std_logic;
 	-- / Signals \ --
 
 begin
-	n_clk <= not clk;
 	U1: PC_Register port map(
 			reset	=>	reset,
-			En	=>	En_Pipeline,
+			En	=>	En_Stage1,
 			inpt	=>	PC_in,
 			outpt	=>	PC_out);
 
@@ -101,7 +101,7 @@ begin
 			reset	=>	reset,
 			Instruction_in	=>	Instruction,
 			Instruction_out	=>	Instruction_out,
-			En	=>	En_Pipeline,
+			En	=>	En_Stage1,
 			PC_Adder_in	=>	PC_Adder_out,
 			PC_Adder_out	=>	PC_next);
 
@@ -115,6 +115,8 @@ begin
 			selector	=>	ProgMode,
 			outpt	=>	Addr_inpt);
 
+	n_clk <= not clk;
+	En_Stage1 <= En_Pipeline and ProgMode;
 end;
 
 -- SubModule: PC_Register --
@@ -167,6 +169,7 @@ end;
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
+
 entity Instruction_Memory is
 port(
 	address:in	std_logic_vector(11 downto 0);
@@ -178,7 +181,7 @@ port(
 end;
 
 architecture one of Instruction_Memory is
-	type Memory_Block is array (0 to 255) of std_logic_vector (31 downto 0);
+	type Memory_Block is array (0 to 255) of std_logic_vector(31 downto 0);
 	signal Memory:Memory_Block;
 begin
 	process(clk,R_nW)begin
@@ -235,7 +238,7 @@ end;
 
 architecture one of PC_Adder is
 begin
-	outpt <= inpt+1;
+	outpt <= inpt + 1;
 end;
 
 -- SubModule: Instruction_Memory_MUX --
