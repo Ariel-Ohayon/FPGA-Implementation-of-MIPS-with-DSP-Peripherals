@@ -1,3 +1,5 @@
+import os
+
 def main():
 
     data = 6
@@ -6,6 +8,10 @@ def main():
     fr = open(filename,"r");
     
     line_number = 0
+    
+    outfile = input('Do you want to create output file?[y/n]')
+    if(outfile == 'y'):
+        f = open('output_file.txt','w')
     
     for line in fr:
         function = list('xxxxxxx')
@@ -166,11 +172,17 @@ def main():
                 break
         
         print(f'Operation: {line}\t|Encode_Data[BIN]: {bin(data)}\t|Encode_Data[HEX]: {hex(data)}')
+        if(outfile == 'y'):
+            f.write(f'{line_number-1}:{hex(data)}\n')
+        
         
         
     fr.close()
+    if(outfile == 'y'):
+        f.close()
+        print('Output File Generated.')
     
-    input('Press Enter to exit...')
+    os.system('pause')
     
     
 def R_Type_Encode(cmd):
