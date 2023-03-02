@@ -170,6 +170,8 @@ def main():
         
     fr.close()
     
+    input('Press Enter to exit...')
+    
     
 def R_Type_Encode(cmd):
     
@@ -524,7 +526,56 @@ def MEM_Encode(cmd):
     return Encode_cmd
     
 def BUS_Type_Encode(cmd):
-    return 5
+    
+    imm = 0
+    rd = 0
+    Per_Addr = 0
+    
+    function = ''
+    # copy #
+    # -- / Calculating function \ --#
+    x = 0
+    while(cmd[x] != ' '):
+        function += cmd[x]
+        x = x + 1
+    # -- / Calculating function \ --#
+    # copy #
+    
+    x = x + 1
+    while(cmd[x] != ','):
+        Per_Addr += int(cmd[x])
+        Per_Addr *= 10
+        x += 1
+    Per_Addr /= 10
+    Per_Addr = int(Per_Addr)
+    
+    if (function == 'PERBUSW'):
+        opcode = 56
+        x += 1
+        for i in range(x,len(cmd)):
+            if(cmd[i] == '\n'):
+                break
+            imm += int(cmd[i])
+            imm *= 10
+        imm = int(imm/10)
+        
+        Encode_cmd = imm
+        
+    elif(function == 'PERBUSR'):
+        opcode = 57
+        x += 2
+        for i in range(x,len(cmd)):
+            if (cmd[i] == '\n'):
+                break
+            rd += int(cmd[i])
+            rd *= 10
+        rd = int(rd/10)
+        
+        Encode_cmd = rd
+        
+    Encode_cmd += (opcode*(2**26)) + (Per_Addr*(2**16))
+    
+    return Encode_cmd
     
     
 main()
