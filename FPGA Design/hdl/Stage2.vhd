@@ -1,609 +1,709 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-entity ID_Control_Unit is
+entity Stage2 is
 port(
+	clk:	in	std_logic;
+	reset:	in	std_logic;
+	En_Pipeline:	in	std_logic;
 	Instruction:	in	std_logic_vector(31 downto 0);
-	ALU_Op_Code:	out	std_logic_vector(5 downto 0);
-	ALU_src:		out	std_logic;
-	En_Integer:		out	std_logic;
-	En_Float:		out	std_logic;
-	Memory_Read:	out	std_logic;
-	Memory_Write:	out	std_logic;
-	Register_Read:	out std_logic;
-	Register_Write:	out	std_logic;
-	WB_MUX:			out	std_logic_vector(1 downto 0));
+	Addr_Write_Reg:	in	std_logic_vector(4 downto 0);
+	Reg_Write_En_in:	in	std_logic;
+	SP_Data:	out	std_logic_vector(11 downto 0);
+	ALU_Op_Code_out:	out	std_logic_vector(5 downto 0);
+	ALU_src_out:	out	std_logic;
+	En_Integer_out:	out	std_logic;
+	En_Float_out:	out	std_logic;
+	Memory_Read_out:	out	std_logic;
+	Memory_Write_out:	out	std_logic;
+	Reg_Write_En_out:	out	std_logic;
+	WB_Mux_sel_out:	out	std_logic;
+	CALL_flag_out:	out	std_logic;
+	RET_flag_out:	out	std_logic;
+	BR_flag_out:	out	std_logic;
+	Addr_Write_Reg_out:	out	std_logic_vector(4 downto 0);
+	data1_out:	out	std_logic_vector(31 downto 0);
+	data2_out:	out	std_logic_vector(31 downto 0);
+	imm_out:	out	std_logic_vector(15 downto 0);
+	JMP_flag_out:	out	std_logic;
+	data_in:	in	std_logic_vector(31 downto 0);
+	F_Read_Reg_En:	out	std_logic;
+	Forward_Data_in:	in	std_logic_vector(31 downto 0);
+	Forward_Selector:	in	std_logic_vector(1 downto 0));
 end;
 
-architecture one of ID_Control_Unit is
+architecture one of Stage2 is
+
+	-- / Components \ --
+	component Control_Unit
+	port(
+		Instruction:	in	std_logic_vector(31 downto 0);
+		OP_Code:	out	std_logic_vector(5 downto 0);
+		ALU_src:	out	std_logic;
+		En_Integer:	out	std_logic;
+		En_Float:	out	std_logic;
+		Memory_Read:	out	std_logic;
+		Memory_Write:	out	std_logic;
+		Reg_Read_En:	out	std_logic;
+		Reg_Write_En:	out	std_logic;
+		WB_MUX_sel:	out	std_logic;
+		JMP_flag:	out	std_logic;
+		CALL_flag:	out	std_logic;
+		RET_flag:	out	std_logic;
+		BR_flag:	out	std_logic);
+	end component;
+	component Register_File
+	port(
+		reset:	in	std_logic;
+		clk:	in	std_logic;
+		Addr_Read_Reg1:	in	std_logic_vector(4 downto 0);
+		Addr_Read_Reg2:	in	std_logic_vector(4 downto 0);
+		En_Read:	in	std_logic;
+		Addr_Write_Reg:	in	std_logic_vector(4 downto 0);
+		En_Write:	in	std_logic;
+		data_in:	in	std_logic_vector(31 downto 0);
+		data1:	out	std_logic_vector(31 downto 0);
+		data2:	out	std_logic_vector(31 downto 0));
+	end component;
+	component StackPointer
+	port(
+		reset:	in	std_logic;
+		clk:	in	std_logic;
+		pop:	in	std_logic;
+		push:	in	std_logic;
+		output:	out	std_logic_vector(11 downto 0);
+		inpt:	in	std_logic_vector(11 downto 0));
+	end component;
+	component ID_EX_Pipeline_Register
+	port(
+		clk:	in	std_logic;
+		reset:	in	std_logic;
+		En:	in	std_logic;
+		ALU_Op_Code_in:	in	std_logic_vector(5 downto 0);
+		ALU_src_in:	in	std_logic;
+		En_Integer_in:	in	std_logic;
+		En_Float_in:	in	std_logic;
+		Memory_Read_in:	in	std_logic;
+		Memory_Write_in:	in	std_logic;
+		Reg_Write_En_in:	in	std_logic;
+		WB_Mux_sel_in:	in	std_logic;
+		CALL_flag_in:	in	std_logic;
+		RET_flag_in:	in	std_logic;
+		BR_flag_in:	in	std_logic;
+		ALU_Op_Code_out:	out	std_logic_vector(5 downto 0);
+		ALU_src_out:	out	std_logic;
+		En_Integer_out:	out	std_logic;
+		En_Float_out:	out	std_logic;
+		Memory_Read_out:	out	std_logic;
+		Memory_Write_out:	out	std_logic;
+		Reg_Write_En_out:	out	std_logic;
+		WB_Mux_sel_out:	out	std_logic;
+		CALL_flag_out:	out	std_logic;
+		RET_flag_out:	out	std_logic;
+		BR_flag_out:	out	std_logic;
+		JMP_flag_in:	in	std_logic;
+		JMP_flag_out:	out	std_logic;
+		Addr_Write_Reg_in:	in	std_logic_vector(4 downto 0);
+		data1_in:	in	std_logic_vector(31 downto 0);
+		data2_in:	in	std_logic_vector(31 downto 0);
+		imm_in:	in	std_logic_vector(15 downto 0);
+		Addr_Write_Reg_out:	out	std_logic_vector(4 downto 0);
+		data1_out:	out	std_logic_vector(31 downto 0);
+		data2_out:	out	std_logic_vector(31 downto 0);
+		imm_out:	out	std_logic_vector(15 downto 0);
+		SP_in:	in	std_logic_vector(11 downto 0);
+		SP_out:	out	std_logic_vector(11 downto 0));
+	end component;
+	component Forward_MUX
+	port(
+		in0:	in	std_logic_vector(31 downto 0);
+		in1:	in	std_logic_vector(31 downto 0);
+		output:	out	std_logic_vector(31 downto 0);
+		selector:	in	std_logic);
+	end component;
+	-- / Components \ --
+
+	-- / Signals\ --
+	signal ALU_Op_Code:	std_logic_vector(5 downto 0);
+	signal ALU_src:	std_logic;
+	signal En_Integer:	std_logic;
+	signal En_Float:	std_logic;
+	signal Memory_Read:	std_logic;
+	signal Memory_Write:	std_logic;
+	signal Reg_Read_En:	std_logic;
+	signal Reg_Write_En:	std_logic;
+	signal WB_MUX_sel:	std_logic;
+	signal JMP_flag:	std_logic;
+	signal CALL_flag:	std_logic;
+	signal RET_flag:	std_logic;
+	signal BR_flag:	std_logic;
+	signal data1:	std_logic_vector(31 downto 0);
+	signal data2:	std_logic_vector(31 downto 0);
+	signal SP_out:	std_logic_vector(11 downto 0);
+	signal Reg1_out:	std_logic_vector(31 downto 0);
+	signal Reg2_out:	std_logic_vector(31 downto 0);
+	-- / Signals \ --
+
 begin
-	
+	U1: Control_Unit port map(
+			Instruction	=>	Instruction,
+			OP_Code	=>	ALU_Op_Code,
+			ALU_src	=>	ALU_src,
+			En_Integer	=>	En_Integer,
+			En_Float	=>	En_Float,
+			Memory_Read	=>	Memory_Read,
+			Memory_Write	=>	Memory_Write,
+			Reg_Read_En	=>	Reg_Read_En,
+			Reg_Write_En	=>	Reg_Write_En,
+			WB_MUX_sel	=>	WB_MUX_sel,
+			JMP_flag	=>	JMP_flag,
+			CALL_flag	=>	CALL_flag,
+			RET_flag	=>	RET_flag,
+			BR_flag	=>	BR_flag);
+
+	U2: Register_File port map(
+			reset	=>	reset,
+			clk	=>	not clk,
+			Addr_Read_Reg1	=>	Instruction(25 downto 21),
+			Addr_Read_Reg2	=>	Instruction(20 downto 16),
+			En_Read	=>	Reg_Read_En,
+			Addr_Write_Reg	=>	Addr_Write_Reg,
+			En_Write	=>	Reg_Write_En_in,
+			data_in	=>	data_in,
+			data1	=>	Reg1_out,
+			data2	=>	Reg2_out);
+
+	U3: StackPointer port map(
+			reset	=>	reset,
+			clk	=>	not clk,
+			pop	=>	RET_flag,
+			push	=>	CALL_flag,
+			output	=>	SP_out,
+			inpt	=>	Instruction(11 downto 0));
+
+	U4: ID_EX_Pipeline_Register port map(
+			clk	=>	clk,
+			reset	=>	reset,
+			En	=>	En_Pipeline,
+			ALU_Op_Code_in	=>	ALU_Op_Code,
+			ALU_src_in	=>	ALU_src,
+			En_Integer_in	=>	En_Integer,
+			En_Float_in	=>	En_Float,
+			Memory_Read_in	=>	Memory_Read,
+			Memory_Write_in	=>	Memory_Write,
+			Reg_Write_En_in	=>	Reg_Write_En,
+			WB_Mux_sel_in	=>	WB_MUX_sel,
+			CALL_flag_in	=>	CALL_flag,
+			RET_flag_in	=>	RET_flag,
+			BR_flag_in	=>	BR_flag,
+			ALU_Op_Code_out	=>	ALU_Op_Code_out,
+			ALU_src_out	=>	ALU_src_out,
+			En_Integer_out	=>	En_Integer_out,
+			En_Float_out	=>	En_Float_out,
+			Memory_Read_out	=>	Memory_Read_out,
+			Memory_Write_out	=>	Memory_Write_out,
+			Reg_Write_En_out	=>	Reg_Write_En_out,
+			WB_Mux_sel_out	=>	WB_Mux_sel_out,
+			CALL_flag_out	=>	CALL_flag_out,
+			RET_flag_out	=>	RET_flag_out,
+			BR_flag_out	=>	BR_flag_out,
+			JMP_flag_in	=>	JMP_flag,
+			JMP_flag_out	=>	JMP_flag_out,
+			Addr_Write_Reg_in	=>	Instruction(15 downto 11),
+			data1_in	=>	data1,
+			data2_in	=>	data2,
+			imm_in	=>	Instruction(15 downto 0),
+			Addr_Write_Reg_out	=>	Addr_Write_Reg_out,
+			data1_out	=>	data1_out,
+			data2_out	=>	data2_out,
+			imm_out	=>	imm_out,
+			SP_in	=>	SP_out,
+			SP_out	=>	SP_Data);
+
+	U5: Forward_MUX port map(
+			in0	=>	Reg1_out,
+			in1	=>	Forward_Data_in,
+			output	=>	data1,
+			selector	=>	Forward_Selector(0));
+
+	U6: Forward_MUX port map(
+			in0	=>	Reg2_out,
+			in1	=>	Forward_Data_in,
+			output	=>	data2,
+			selector	=>	Forward_Selector(1));
+
+	F_Read_Reg_En <= Reg_Read_En;
 end;
 
---
+-- SubModule: Control_Unit --
 
 library ieee;
 use ieee.std_logic_1164.all;
 
-entity ID_Register_File is
+entity Control_Unit is
 port(
-	clk:		in	std_logic;
-	reset:		in	std_logic;
-	En_Read:	in	std_logic;
-	En_Write:	in	std_logic;
-	Read_Reg1:	in	std_logic_vector(4  downto 0);
-	Read_Reg2:	in	std_logic_vector(4  downto 0);
-	Write_Reg:	in	std_logic_vector(4  downto 0);
-	data_in:	in	std_logic_vector(31 downto 0);
-	data1:		out	std_logic_vector(31 downto 0);
-	data2:		out	std_logic_vector(31 downto 0));
+	Instruction:in	std_logic_vector(31 downto 0);
+	OP_Code:out	std_logic_vector(5 downto 0);
+	ALU_src:out	std_logic;
+	En_Integer:out	std_logic;
+	En_Float:out	std_logic;
+	Memory_Read:out	std_logic;
+	Memory_Write:out	std_logic;
+	Reg_Read_En:out	std_logic;
+	Reg_Write_En:out	std_logic;
+	WB_MUX_sel:out	std_logic;
+	JMP_flag:out	std_logic;
+	CALL_flag:out	std_logic;
+	RET_flag:out	std_logic;
+	BR_flag:out	std_logic);
 end;
 
-architecture one of ID_Register_File is
-	
+architecture one of Control_Unit is
+begin
+
+end;
+
+-- SubModule: Register_File --
+
+library ieee;
+use ieee.std_logic_1164.all;
+
+entity Register_File is
+port(
+	reset:in	std_logic;
+	clk:in	std_logic;
+	Addr_Read_Reg1:in	std_logic_vector(4 downto 0);
+	Addr_Read_Reg2:in	std_logic_vector(4 downto 0);
+	En_Read:in	std_logic;
+	Addr_Write_Reg:in	std_logic_vector(4 downto 0);
+	En_Write:in	std_logic;
+	data_in:in	std_logic_vector(31 downto 0);
+	data1:out	std_logic_vector(31 downto 0);
+	data2:out	std_logic_vector(31 downto 0));
+end;
+
+architecture one of Register_File is
+
 	-- / Components \ --
-	component Reg
+	component Register_File_Multiplexer
+	port(
+		selector:	in	std_logic_vector(4  downto 0);
+		Reg0:		in	std_logic_vector(31 downto 0);
+		Reg1:		in	std_logic_vector(31 downto 0);
+		Reg2:		in	std_logic_vector(31 downto 0);
+		Reg3:		in	std_logic_vector(31 downto 0);
+		Reg4:		in	std_logic_vector(31 downto 0);
+		Reg5:		in	std_logic_vector(31 downto 0);
+		Reg6:		in	std_logic_vector(31 downto 0);
+		Reg7:		in	std_logic_vector(31 downto 0);
+		Reg8:		in	std_logic_vector(31 downto 0);
+		Reg9:		in	std_logic_vector(31 downto 0);
+		Reg10:		in	std_logic_vector(31 downto 0);
+		Reg11:		in	std_logic_vector(31 downto 0);
+		Reg12:		in	std_logic_vector(31 downto 0);
+		Reg13:		in	std_logic_vector(31 downto 0);
+		Reg14:		in	std_logic_vector(31 downto 0);
+		Reg15:		in	std_logic_vector(31 downto 0);
+		Reg16:		in	std_logic_vector(31 downto 0);
+		Reg17:		in	std_logic_vector(31 downto 0);
+		Reg18:		in	std_logic_vector(31 downto 0);
+		Reg19:		in	std_logic_vector(31 downto 0);
+		Reg20:		in	std_logic_vector(31 downto 0);
+		Reg21:		in	std_logic_vector(31 downto 0);
+		Reg22:		in	std_logic_vector(31 downto 0);
+		Reg23:		in	std_logic_vector(31 downto 0);
+		Reg24:		in	std_logic_vector(31 downto 0);
+		Reg25:		in	std_logic_vector(31 downto 0);
+		Reg26:		in	std_logic_vector(31 downto 0);
+		Reg27:		in	std_logic_vector(31 downto 0);
+		Reg28:		in	std_logic_vector(31 downto 0);
+		Reg29:		in	std_logic_vector(31 downto 0);
+		Reg30:		in	std_logic_vector(31 downto 0);
+		Reg31:		in	std_logic_vector(31 downto 0);
+		outpt:		out	std_logic_vector(31 downto 0));
+	end component;
+	
+	component Rgister_File_Decoder
+	generic(N:	integer := 2);
+	port(
+		inpt:	in	std_logic_vector(N-1 downto 0);
+		outpt:	out	std_logic_vector((2**N)-1 downto 0));
+	end component;
+	
+	component Register_File_Register
 	port(
 		clk:	in	std_logic;
 		reset:	in	std_logic;
 		En:		in	std_logic;
-		D:		in	std_logic_vector(31 downto 0);
-		Q:		out	std_logic_vector(31 downto 0));
-	end component;
-	
-	component Decoder
-	generic(input_Bit:	integer := 3);
-	port(
-		inpt:	in	std_logic_vector(input_Bit-1 downto 0);
-		outpt:	out	std_logic_vector((2**input_Bit)-1 downto 0));
-	end component;
-	
-	component Mux_Register
-	port(
-		Mux_in_0:	in	std_logic_vector(31 downto 0);
-		Mux_in_1:	in	std_logic_vector(31 downto 0);
-		Mux_in_2:	in	std_logic_vector(31 downto 0);
-		Mux_in_3:	in	std_logic_vector(31 downto 0);
-		Mux_in_4:	in	std_logic_vector(31 downto 0);
-		Mux_in_5:	in	std_logic_vector(31 downto 0);
-		Mux_in_6:	in	std_logic_vector(31 downto 0);
-		Mux_in_7:	in	std_logic_vector(31 downto 0);
-		Mux_in_8:	in	std_logic_vector(31 downto 0);
-		Mux_in_9:	in	std_logic_vector(31 downto 0);
-		Mux_in_10:	in	std_logic_vector(31 downto 0);
-		Mux_in_11:	in	std_logic_vector(31 downto 0);
-		Mux_in_12:	in	std_logic_vector(31 downto 0);
-		Mux_in_13:	in	std_logic_vector(31 downto 0);
-		Mux_in_14:	in	std_logic_vector(31 downto 0);
-		Mux_in_15:	in	std_logic_vector(31 downto 0);
-		Mux_in_16:	in	std_logic_vector(31 downto 0);
-		Mux_in_17:	in	std_logic_vector(31 downto 0);
-		Mux_in_18:	in	std_logic_vector(31 downto 0);
-		Mux_in_19:	in	std_logic_vector(31 downto 0);
-		Mux_in_20:	in	std_logic_vector(31 downto 0);
-		Mux_in_21:	in	std_logic_vector(31 downto 0);
-		Mux_in_22:	in	std_logic_vector(31 downto 0);
-		Mux_in_23:	in	std_logic_vector(31 downto 0);
-		Mux_in_24:	in	std_logic_vector(31 downto 0);
-		Mux_in_25:	in	std_logic_vector(31 downto 0);
-		Mux_in_26:	in	std_logic_vector(31 downto 0);
-		Mux_in_27:	in	std_logic_vector(31 downto 0);
-		Mux_in_28:	in	std_logic_vector(31 downto 0);
-		Mux_in_29:	in	std_logic_vector(31 downto 0);
-		Mux_in_30:	in	std_logic_vector(31 downto 0);
-		Mux_in_31:	in	std_logic_vector(31 downto 0);
-	
-		selector:	in	std_logic_vector(4 downto 0);
-	
-		outpt:		out	std_logic_vector(31 downto 0));
+		inpt:	in	std_logic_vector(31 downto 0);
+		outpt:	out	std_logic_vector(31 downto 0));
 	end component;
 	-- / Components \ --
-	
+
 	-- / Signals \ --
-	signal Decoder_out:	std_logic_vector(31 downto 0);
-	
-	signal Mux_in_0:	std_logic_vector(31 downto 0);
-	signal Mux_in_1:	std_logic_vector(31 downto 0);
-	signal Mux_in_2:	std_logic_vector(31 downto 0);
-	signal Mux_in_3:	std_logic_vector(31 downto 0);
-	signal Mux_in_4:	std_logic_vector(31 downto 0);
-	signal Mux_in_5:	std_logic_vector(31 downto 0);
-	signal Mux_in_6:	std_logic_vector(31 downto 0);
-	signal Mux_in_7:	std_logic_vector(31 downto 0);
-	signal Mux_in_8:	std_logic_vector(31 downto 0);
-	signal Mux_in_9:	std_logic_vector(31 downto 0);
-	signal Mux_in_10:	std_logic_vector(31 downto 0);
-	signal Mux_in_11:	std_logic_vector(31 downto 0);
-	signal Mux_in_12:	std_logic_vector(31 downto 0);
-	signal Mux_in_13:	std_logic_vector(31 downto 0);
-	signal Mux_in_14:	std_logic_vector(31 downto 0);
-	signal Mux_in_15:	std_logic_vector(31 downto 0);
-	signal Mux_in_16:	std_logic_vector(31 downto 0);
-	signal Mux_in_17:	std_logic_vector(31 downto 0);
-	signal Mux_in_18:	std_logic_vector(31 downto 0);
-	signal Mux_in_19:	std_logic_vector(31 downto 0);
-	signal Mux_in_20:	std_logic_vector(31 downto 0);
-	signal Mux_in_21:	std_logic_vector(31 downto 0);
-	signal Mux_in_22:	std_logic_vector(31 downto 0);
-	signal Mux_in_23:	std_logic_vector(31 downto 0);
-	signal Mux_in_24:	std_logic_vector(31 downto 0);
-	signal Mux_in_25:	std_logic_vector(31 downto 0);
-	signal Mux_in_26:	std_logic_vector(31 downto 0);
-	signal Mux_in_27:	std_logic_vector(31 downto 0);
-	signal Mux_in_28:	std_logic_vector(31 downto 0);
-	signal Mux_in_29:	std_logic_vector(31 downto 0);
-	signal Mux_in_30:	std_logic_vector(31 downto 0);
-	signal Mux_in_31:	std_logic_vector(31 downto 0);
+	signal Mux_in0:		std_logic_vector(31 downto 0);
+	signal Mux_in1:		std_logic_vector(31 downto 0);
+	signal Mux_in2:		std_logic_vector(31 downto 0);
+	signal Mux_in3:		std_logic_vector(31 downto 0);
+	signal Mux_in4:		std_logic_vector(31 downto 0);
+	signal Mux_in5:		std_logic_vector(31 downto 0);
+	signal Mux_in6:		std_logic_vector(31 downto 0);
+	signal Mux_in7:		std_logic_vector(31 downto 0);
+	signal Mux_in8:		std_logic_vector(31 downto 0);
+	signal Mux_in9:		std_logic_vector(31 downto 0);
+	signal Mux_in10:	std_logic_vector(31 downto 0);
+	signal Mux_in11:	std_logic_vector(31 downto 0);
+	signal Mux_in12:	std_logic_vector(31 downto 0);
+	signal Mux_in13:	std_logic_vector(31 downto 0);
+	signal Mux_in14:	std_logic_vector(31 downto 0);
+	signal Mux_in15:	std_logic_vector(31 downto 0);
+	signal Mux_in16:	std_logic_vector(31 downto 0);
+	signal Mux_in17:	std_logic_vector(31 downto 0);
+	signal Mux_in18:	std_logic_vector(31 downto 0);
+	signal Mux_in19:	std_logic_vector(31 downto 0);
+	signal Mux_in20:	std_logic_vector(31 downto 0);
+	signal Mux_in21:	std_logic_vector(31 downto 0);
+	signal Mux_in22:	std_logic_vector(31 downto 0);
+	signal Mux_in23:	std_logic_vector(31 downto 0);
+	signal Mux_in24:	std_logic_vector(31 downto 0);
+	signal Mux_in25:	std_logic_vector(31 downto 0);
+	signal Mux_in26:	std_logic_vector(31 downto 0);
+	signal Mux_in27:	std_logic_vector(31 downto 0);
+	signal Mux_in28:	std_logic_vector(31 downto 0);
+	signal Mux_in29:	std_logic_vector(31 downto 0);
+	signal Mux_in30:	std_logic_vector(31 downto 0);
+	signal Mux_in31:	std_logic_vector(31 downto 0);
+	signal En_Reg:		std_logic_vector(31 downto 0);
+	signal sEn_Read:	std_logic_vector(31 downto 0);
+	signal sdata1:		std_logic_vector(31 downto 0);
+	signal sdata2:		std_logic_vector(31 downto 0);
 	-- / Signals \ --
-	
+
 begin
-	R0:	Reg port map(clk, reset, Decoder_out(0), (others => '0') , Mux_in_0);
+	sEn_Read <= (others => En_Read);
+	U1:	Rgister_File_Decoder generic map(5) port map(Addr_Write_Reg,En_Reg);
 	
-	R1:		Reg port map(clk, reset, Decoder_out(1),  data_in , Mux_in_1);
-	R2:		Reg port map(clk, reset, Decoder_out(2),  data_in , Mux_in_2);
-	R3:		Reg port map(clk, reset, Decoder_out(3),  data_in , Mux_in_3);
-	R4:		Reg port map(clk, reset, Decoder_out(4),  data_in , Mux_in_4);
-	R5:		Reg port map(clk, reset, Decoder_out(5),  data_in , Mux_in_5);
-	R6:		Reg port map(clk, reset, Decoder_out(6),  data_in , Mux_in_6);
-	R7:		Reg port map(clk, reset, Decoder_out(7),  data_in , Mux_in_7);
-	R8:		Reg port map(clk, reset, Decoder_out(8),  data_in , Mux_in_8);
-	R9:		Reg port map(clk, reset, Decoder_out(9),  data_in , Mux_in_9);
-	R10:	Reg port map(clk, reset, Decoder_out(10), data_in , Mux_in_10);
-	R11:	Reg port map(clk, reset, Decoder_out(11), data_in , Mux_in_11);
-	R12:	Reg port map(clk, reset, Decoder_out(12), data_in , Mux_in_12);
-	R13:	Reg port map(clk, reset, Decoder_out(13), data_in , Mux_in_13);
-	R14:	Reg port map(clk, reset, Decoder_out(14), data_in , Mux_in_14);
-	R15:	Reg port map(clk, reset, Decoder_out(15), data_in , Mux_in_15);
-	R16:	Reg port map(clk, reset, Decoder_out(16), data_in , Mux_in_16);
-	R17:	Reg port map(clk, reset, Decoder_out(17), data_in , Mux_in_17);
-	R18:	Reg port map(clk, reset, Decoder_out(18), data_in , Mux_in_18);
-	R19:	Reg port map(clk, reset, Decoder_out(19), data_in , Mux_in_19);
-	R20:	Reg port map(clk, reset, Decoder_out(20), data_in , Mux_in_20);
-	R21:	Reg port map(clk, reset, Decoder_out(21), data_in , Mux_in_21);
-	R22:	Reg port map(clk, reset, Decoder_out(22), data_in , Mux_in_22);
-	R23:	Reg port map(clk, reset, Decoder_out(23), data_in , Mux_in_23);
-	R24:	Reg port map(clk, reset, Decoder_out(24), data_in , Mux_in_24);
-	R25:	Reg port map(clk, reset, Decoder_out(25), data_in , Mux_in_25);
-	R26:	Reg port map(clk, reset, Decoder_out(26), data_in , Mux_in_26);
-	R27:	Reg port map(clk, reset, Decoder_out(27), data_in , Mux_in_27);
-	R28:	Reg port map(clk, reset, Decoder_out(28), data_in , Mux_in_28);
-	R29:	Reg port map(clk, reset, Decoder_out(29), data_in , Mux_in_29);
-	R30:	Reg port map(clk, reset, Decoder_out(30), data_in , Mux_in_30);
-	R31:	Reg port map(clk, reset, Decoder_out(31), data_in , Mux_in_31);
-	
-	U1: Decoder generic map(5) port map(Write_Reg, Decoder_out);
-	
-	U2:	Mux_Register	port map(
-		Mux_in_0,	Mux_in_1,	Mux_in_2,	Mux_in_3,
-		Mux_in_4,	Mux_in_5,	Mux_in_6,	Mux_in_7,
-		Mux_in_8,	Mux_in_9,	Mux_in_10,	Mux_in_11,
-		Mux_in_12,	Mux_in_13,	Mux_in_14,	Mux_in_15,
-		Mux_in_16,	Mux_in_17,	Mux_in_18,	Mux_in_19,
-		Mux_in_20,	Mux_in_21,	Mux_in_22,	Mux_in_23,
-		Mux_in_24,	Mux_in_25,	Mux_in_26,	Mux_in_27,
-		Mux_in_28,	Mux_in_29,	Mux_in_30,	Mux_in_31,
+	U2:	Register_File_Multiplexer port map(
+		Addr_Read_Reg1,
+		Mux_in0,Mux_in1,Mux_in2,Mux_in3,Mux_in4,
+		Mux_in5,Mux_in6,Mux_in7,Mux_in8,Mux_in9,
 		
-		Read_Reg1,
+		Mux_in10,Mux_in11,Mux_in12,Mux_in13,Mux_in14,
+		Mux_in15,Mux_in16,Mux_in17,Mux_in18,Mux_in19,
 		
-		data1);
+		Mux_in20,Mux_in21,Mux_in22,Mux_in23,Mux_in24,
+		Mux_in25,Mux_in26,Mux_in27,Mux_in28,Mux_in29,
+		
+		Mux_in30,Mux_in31,
+		
+		sdata1);
 	
-	U3:	Mux_Register	port map(
-		Mux_in_0,	Mux_in_1,	Mux_in_2,	Mux_in_3,
-		Mux_in_4,	Mux_in_5,	Mux_in_6,	Mux_in_7,
-		Mux_in_8,	Mux_in_9,	Mux_in_10,	Mux_in_11,
-		Mux_in_12,	Mux_in_13,	Mux_in_14,	Mux_in_15,
-		Mux_in_16,	Mux_in_17,	Mux_in_18,	Mux_in_19,
-		Mux_in_20,	Mux_in_21,	Mux_in_22,	Mux_in_23,
-		Mux_in_24,	Mux_in_25,	Mux_in_26,	Mux_in_27,
-		Mux_in_28,	Mux_in_29,	Mux_in_30,	Mux_in_31,
+	U3:	Register_File_Multiplexer port map(
+		Addr_Read_Reg2,
+		Mux_in0,Mux_in1,Mux_in2,Mux_in3,Mux_in4,
+		Mux_in5,Mux_in6,Mux_in7,Mux_in8,Mux_in9,
 		
-		Read_Reg2,
+		Mux_in10,Mux_in11,Mux_in12,Mux_in13,Mux_in14,
+		Mux_in15,Mux_in16,Mux_in17,Mux_in18,Mux_in19,
 		
-		data2);
+		Mux_in20,Mux_in21,Mux_in22,Mux_in23,Mux_in24,
+		Mux_in25,Mux_in26,Mux_in27,Mux_in28,Mux_in29,
+		
+		Mux_in30,Mux_in31,
+		
+		sdata2);
 	
+	data1 <= sEn_Read and sdata1;
+	data2 <= sEn_Read and sdata2;
+	
+	Reg0:	Register_File_Register port map(clk,reset,En_Write and En_Reg(0),data_in,Mux_in0);
+	Reg1:	Register_File_Register port map(clk,reset,En_Write and En_Reg(1),data_in,Mux_in1);
+	Reg2:	Register_File_Register port map(clk,reset,En_Write and En_Reg(2),data_in,Mux_in2);
+	Reg3:	Register_File_Register port map(clk,reset,En_Write and En_Reg(3),data_in,Mux_in3);
+	Reg4:	Register_File_Register port map(clk,reset,En_Write and En_Reg(4),data_in,Mux_in4);
+	Reg5:	Register_File_Register port map(clk,reset,En_Write and En_Reg(5),data_in,Mux_in5);
+	Reg6:	Register_File_Register port map(clk,reset,En_Write and En_Reg(6),data_in,Mux_in6);
+	Reg7:	Register_File_Register port map(clk,reset,En_Write and En_Reg(7),data_in,Mux_in7);
+	Reg8:	Register_File_Register port map(clk,reset,En_Write and En_Reg(8),data_in,Mux_in8);
+	Reg9:	Register_File_Register port map(clk,reset,En_Write and En_Reg(9),data_in,Mux_in9);
+	Reg10:	Register_File_Register port map(clk,reset,En_Write and En_Reg(10),data_in,Mux_in10);
+	Reg11:	Register_File_Register port map(clk,reset,En_Write and En_Reg(11),data_in,Mux_in11);
+	Reg12:	Register_File_Register port map(clk,reset,En_Write and En_Reg(12),data_in,Mux_in12);
+	Reg13:	Register_File_Register port map(clk,reset,En_Write and En_Reg(13),data_in,Mux_in13);
+	Reg14:	Register_File_Register port map(clk,reset,En_Write and En_Reg(14),data_in,Mux_in14);
+	Reg15:	Register_File_Register port map(clk,reset,En_Write and En_Reg(15),data_in,Mux_in15);
+	Reg16:	Register_File_Register port map(clk,reset,En_Write and En_Reg(16),data_in,Mux_in16);
+	Reg17:	Register_File_Register port map(clk,reset,En_Write and En_Reg(17),data_in,Mux_in17);
+	Reg18:	Register_File_Register port map(clk,reset,En_Write and En_Reg(18),data_in,Mux_in18);
+	Reg19:	Register_File_Register port map(clk,reset,En_Write and En_Reg(19),data_in,Mux_in19);
+	Reg20:	Register_File_Register port map(clk,reset,En_Write and En_Reg(20),data_in,Mux_in20);
+	Reg21:	Register_File_Register port map(clk,reset,En_Write and En_Reg(21),data_in,Mux_in21);
+	Reg22:	Register_File_Register port map(clk,reset,En_Write and En_Reg(22),data_in,Mux_in22);
+	Reg23:	Register_File_Register port map(clk,reset,En_Write and En_Reg(23),data_in,Mux_in23);
+	Reg24:	Register_File_Register port map(clk,reset,En_Write and En_Reg(24),data_in,Mux_in24);
+	Reg25:	Register_File_Register port map(clk,reset,En_Write and En_Reg(25),data_in,Mux_in25);
+	Reg26:	Register_File_Register port map(clk,reset,En_Write and En_Reg(26),data_in,Mux_in26);
+	Reg27:	Register_File_Register port map(clk,reset,En_Write and En_Reg(27),data_in,Mux_in27);
+	Reg28:	Register_File_Register port map(clk,reset,En_Write and En_Reg(28),data_in,Mux_in28);
+	Reg29:	Register_File_Register port map(clk,reset,En_Write and En_Reg(29),data_in,Mux_in29);
+	Reg30:	Register_File_Register port map(clk,reset,En_Write and En_Reg(30),data_in,Mux_in30);
+	Reg31:	Register_File_Register port map(clk,reset,En_Write and En_Reg(31),data_in,Mux_in31);
 end;
 
---
+-- SubModule: Rgister_File_Decoder --
 
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.std_logic_unsigned.all;
 
-entity Mux_Register is
+entity Rgister_File_Decoder is
+generic(N:	integer := 2);
 port(
-	Mux_in_0:	in	std_logic_vector(31 downto 0);
-	Mux_in_1:	in	std_logic_vector(31 downto 0);
-	Mux_in_2:	in	std_logic_vector(31 downto 0);
-	Mux_in_3:	in	std_logic_vector(31 downto 0);
-	Mux_in_4:	in	std_logic_vector(31 downto 0);
-	Mux_in_5:	in	std_logic_vector(31 downto 0);
-	Mux_in_6:	in	std_logic_vector(31 downto 0);
-	Mux_in_7:	in	std_logic_vector(31 downto 0);
-	Mux_in_8:	in	std_logic_vector(31 downto 0);
-	Mux_in_9:	in	std_logic_vector(31 downto 0);
-	Mux_in_10:	in	std_logic_vector(31 downto 0);
-	Mux_in_11:	in	std_logic_vector(31 downto 0);
-	Mux_in_12:	in	std_logic_vector(31 downto 0);
-	Mux_in_13:	in	std_logic_vector(31 downto 0);
-	Mux_in_14:	in	std_logic_vector(31 downto 0);
-	Mux_in_15:	in	std_logic_vector(31 downto 0);
-	Mux_in_16:	in	std_logic_vector(31 downto 0);
-	Mux_in_17:	in	std_logic_vector(31 downto 0);
-	Mux_in_18:	in	std_logic_vector(31 downto 0);
-	Mux_in_19:	in	std_logic_vector(31 downto 0);
-	Mux_in_20:	in	std_logic_vector(31 downto 0);
-	Mux_in_21:	in	std_logic_vector(31 downto 0);
-	Mux_in_22:	in	std_logic_vector(31 downto 0);
-	Mux_in_23:	in	std_logic_vector(31 downto 0);
-	Mux_in_24:	in	std_logic_vector(31 downto 0);
-	Mux_in_25:	in	std_logic_vector(31 downto 0);
-	Mux_in_26:	in	std_logic_vector(31 downto 0);
-	Mux_in_27:	in	std_logic_vector(31 downto 0);
-	Mux_in_28:	in	std_logic_vector(31 downto 0);
-	Mux_in_29:	in	std_logic_vector(31 downto 0);
-	Mux_in_30:	in	std_logic_vector(31 downto 0);
-	Mux_in_31:	in	std_logic_vector(31 downto 0);
-	
-	selector:	in	std_logic_vector(4 downto 0);
-	
-	outpt:		out	std_logic_vector(31 downto 0));
+	inpt:	in	std_logic_vector(N-1 downto 0);
+	outpt:	out	std_logic_vector((2**N)-1 downto 0));
 end;
 
-architecture one of Mux_Register is
-begin
-	with selector select outpt <= 
-		Mux_in_0  when "00000",	-- 0
-		Mux_in_1  when "00001",	-- 1
-		Mux_in_2  when "00010",	-- 2
-		Mux_in_3  when "00011",	-- 3
-		Mux_in_4  when "00100",	-- 4
-		Mux_in_5  when "00101",	-- 5
-		Mux_in_6  when "00110",	-- 6
-		Mux_in_7  when "00111",	-- 7
-		Mux_in_8  when "01000",	-- 8
-		Mux_in_9  when "01001",	-- 9
-		Mux_in_10 when "01010",	-- 10
-		Mux_in_11 when "01011",	-- 11
-		Mux_in_12 when "01100",	-- 12
-		Mux_in_13 when "01101",	-- 13
-		Mux_in_14 when "01110",	-- 14
-		Mux_in_15 when "01111",	-- 15
-		Mux_in_16 when "10000",	-- 16
-		Mux_in_17 when "10001",	-- 17
-		Mux_in_18 when "10010",	-- 18
-		Mux_in_19 when "10011",	-- 19
-		Mux_in_20 when "10100",	-- 20
-		Mux_in_21 when "10101",	-- 21
-		Mux_in_22 when "10110",	-- 22
-		Mux_in_23 when "10111",	-- 23
-		Mux_in_24 when "11000",	-- 24
-		Mux_in_25 when "11001",	-- 25
-		Mux_in_26 when "11010",	-- 26
-		Mux_in_27 when "11011",	-- 27
-		Mux_in_28 when "11100",	-- 28
-		Mux_in_29 when "11101",	-- 29
-		Mux_in_30 when "11110",	-- 30
-		Mux_in_31 when "11111";	-- 31
-end;
-
---
-
-
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.std_logic_arith.all;
-
-entity Decoder is
-generic(input_Bit:	integer := 3);
-port(
-	inpt:	in	std_logic_vector(input_Bit-1 downto 0);
-	outpt:	out	std_logic_vector((2**input_Bit)-1 downto 0));
-end;
-
-architecture one of Decoder is
+architecture one of Rgister_File_Decoder is
 begin
 	process(inpt)begin
-		outpt	<= (others => '0');
-		outpt(conv_integer(unsigned(inpt))) <= '1';
+		outpt <= (others=>'0');
+		outpt(CONV_INTEGER(inpt)) <= '1';
 	end process;
 end;
 
---
+-- SubModule: Register_File_Multiplexer --
 
 library ieee;
 use ieee.std_logic_1164.all;
 
-entity Reg is
+entity Register_File_Multiplexer is
+port(
+	selector:	in	std_logic_vector(4  downto 0);
+	Reg0:		in	std_logic_vector(31 downto 0);
+	Reg1:		in	std_logic_vector(31 downto 0);
+	Reg2:		in	std_logic_vector(31 downto 0);
+	Reg3:		in	std_logic_vector(31 downto 0);
+	Reg4:		in	std_logic_vector(31 downto 0);
+	Reg5:		in	std_logic_vector(31 downto 0);
+	Reg6:		in	std_logic_vector(31 downto 0);
+	Reg7:		in	std_logic_vector(31 downto 0);
+	Reg8:		in	std_logic_vector(31 downto 0);
+	Reg9:		in	std_logic_vector(31 downto 0);
+	Reg10:		in	std_logic_vector(31 downto 0);
+	Reg11:		in	std_logic_vector(31 downto 0);
+	Reg12:		in	std_logic_vector(31 downto 0);
+	Reg13:		in	std_logic_vector(31 downto 0);
+	Reg14:		in	std_logic_vector(31 downto 0);
+	Reg15:		in	std_logic_vector(31 downto 0);
+	Reg16:		in	std_logic_vector(31 downto 0);
+	Reg17:		in	std_logic_vector(31 downto 0);
+	Reg18:		in	std_logic_vector(31 downto 0);
+	Reg19:		in	std_logic_vector(31 downto 0);
+	Reg20:		in	std_logic_vector(31 downto 0);
+	Reg21:		in	std_logic_vector(31 downto 0);
+	Reg22:		in	std_logic_vector(31 downto 0);
+	Reg23:		in	std_logic_vector(31 downto 0);
+	Reg24:		in	std_logic_vector(31 downto 0);
+	Reg25:		in	std_logic_vector(31 downto 0);
+	Reg26:		in	std_logic_vector(31 downto 0);
+	Reg27:		in	std_logic_vector(31 downto 0);
+	Reg28:		in	std_logic_vector(31 downto 0);
+	Reg29:		in	std_logic_vector(31 downto 0);
+	Reg30:		in	std_logic_vector(31 downto 0);
+	Reg31:		in	std_logic_vector(31 downto 0);
+	outpt:		out	std_logic_vector(31 downto 0));
+end;
+
+architecture one of Register_File_Multiplexer is
+begin
+	with selector select outpt <= 
+	Reg0	when	"00000",	-- 0
+	Reg1	when	"00001",	-- 1
+	Reg2	when	"00010",	-- 2
+	Reg3	when	"00011",	-- 3
+	Reg4	when	"00100",	-- 4
+	Reg5	when	"00101",	-- 5
+	Reg6	when	"00110",	-- 6
+	Reg7	when	"00111",	-- 7
+	Reg8	when	"01000",	-- 8
+	Reg9	when	"01001",	-- 9
+	Reg10	when	"01010",	-- 10
+	Reg11	when	"01011",	-- 11
+	Reg12	when	"01100",	-- 12
+	Reg13	when	"01101",	-- 13
+	Reg14	when	"01110",	-- 14
+	Reg15	when	"01111",	-- 15
+	Reg16	when	"10000",	-- 16
+	Reg17	when	"10001",	-- 17
+	Reg18	when	"10010",	-- 18
+	Reg19	when	"10011",	-- 19
+	Reg20	when	"10100",	-- 20
+	Reg21	when	"10101",	-- 21
+	Reg22	when	"10110",	-- 22
+	Reg23	when	"10111",	-- 23
+	Reg24	when	"11000",	-- 24
+	Reg25	when	"11001",	-- 25
+	Reg26	when	"11010",	-- 26
+	Reg27	when	"11011",	-- 27
+	Reg28	when	"11100",	-- 28
+	Reg29	when	"11101",	-- 29
+	Reg30	when	"11110",	-- 30
+	Reg31	when	"11111";	-- 31
+end;
+
+-- Submodule: Register_File_Register --
+
+library ieee;
+use ieee.std_logic_1164.all;
+
+entity Register_File_Register is
 port(
 	clk:	in	std_logic;
 	reset:	in	std_logic;
 	En:		in	std_logic;
-	D:		in	std_logic_vector(31 downto 0);
-	Q:		out	std_logic_vector(31 downto 0));
+	inpt:	in	std_logic_vector(31 downto 0);
+	outpt:	out	std_logic_vector(31 downto 0));
 end;
 
-architecture one of Reg is
-	signal  sQ:	std_Logic_vector(31 downto 0);
+architecture one of Register_File_Register is
 begin
-	Q <= sQ;
-	process(reset,clk)begin
-		if (reset = '1')then
-			sQ <= (others => '0');
-		elsif(clk 'event and clk = '1')then
-			if (En = '1')then
-				sQ <= D;
+	process(clk,reset)begin
+		if (reset = '1') then
+			outpt <= (others => '0');
+		elsif (clk 'event and clk = '1')then
+			if(En = '1')then
+				outpt <= inpt;
 			end if;
 		end if;
 	end process;
 end;
 
---
+-- SubModule: StackPointer --
+
+library ieee;
+use ieee.std_logic_1164.all;
+
+entity StackPointer is
+port(
+	reset:in	std_logic;
+	clk:in	std_logic;
+	pop:in	std_logic;
+	push:in	std_logic;
+	output:out	std_logic_vector(11 downto 0);
+	inpt:in	std_logic_vector(11 downto 0));
+end;
+
+architecture one of StackPointer is
+begin
+
+end;
+
+-- SubModule: ID_EX_Pipeline_Register --
 
 library ieee;
 use ieee.std_logic_1164.all;
 
 entity ID_EX_Pipeline_Register is
 port(
-
-	-- Inputs:
-	clk:						in	std_logic;
-	En:							in	std_logic;
-	reset:						in	std_logic;
-	Register_Write_addr_in:		in	std_logic_vector(4  downto 0);
-	data1_in:					in	std_logic_vector(31 downto 0);
-	data2_in:					in	std_logic_vector(31 downto 0);
-	imm_in:						in	std_Logic_vector(15 downto 0);
-	next_addr_in:				in	std_logic_vector(31 downto 0);
-	
-	-- Input Control Signals:
-	ALU_Op_Code_in:				in	std_logic_vector(5 downto 0);
-	ALU_src_in:					in	std_logic;
-	En_Integer_in:				in	std_logic;
-	En_Float_in:				in	std_logic;
-	Memory_Read_in:				in	std_logic;
-	Memory_Write_in:			in	std_logic;
-	Write_Register_in:			in	std_logic;
-	WB_MUX_in:					in	std_logic_vector(1 downto 0);
-	
-	-- Outputs:
-	Register_Write_addr_out:	out	std_logic_vector(4  downto 0);
-	data1_out:					out	std_logic_vector(31 downto 0);
-	data2_out:					out	std_logic_vector(31 downto 0);
-	imm_out:					out	std_logic_vector(15 downto 0);
-	next_addr_out:				out	std_logic_vector(31 downto 0);
-	
-	-- Output Control Signals:
-	ALU_Op_Code_out:			out	std_logic_vector(5  downto 0);
-	ALU_src_out:				out	std_logic;
-	En_Integer_out:				out	std_logic;
-	En_Float_out:				out	std_logic;
-	Memory_Read_out:			out	std_logic;
-	Memory_Write_out:			out	std_logic;
-	Write_Register_out:			out	std_logic;
-	WB_MUX_out:					out	std_logic_vector(1 downto 0));
+	clk:in	std_logic;
+	reset:in	std_logic;
+	En:in	std_logic;
+	ALU_Op_Code_in:in	std_logic_vector(5 downto 0);
+	ALU_src_in:in	std_logic;
+	En_Integer_in:in	std_logic;
+	En_Float_in:in	std_logic;
+	Memory_Read_in:in	std_logic;
+	Memory_Write_in:in	std_logic;
+	Reg_Write_En_in:in	std_logic;
+	WB_Mux_sel_in:in	std_logic;
+	CALL_flag_in:in	std_logic;
+	RET_flag_in:in	std_logic;
+	BR_flag_in:in	std_logic; --
+	ALU_Op_Code_out:out	std_logic_vector(5 downto 0);
+	ALU_src_out:out	std_logic;
+	En_Integer_out:out	std_logic;
+	En_Float_out:out	std_logic;
+	Memory_Read_out:out	std_logic;
+	Memory_Write_out:out	std_logic;
+	Reg_Write_En_out:out	std_logic;
+	WB_Mux_sel_out:out	std_logic;
+	CALL_flag_out:out	std_logic;
+	RET_flag_out:out	std_logic;
+	BR_flag_out:out	std_logic;
+	JMP_flag_in:in	std_logic;--
+	JMP_flag_out:out	std_logic;
+	Addr_Write_Reg_in:in	std_logic_vector(4 downto 0);
+	data1_in:in	std_logic_vector(31 downto 0);
+	data2_in:in	std_logic_vector(31 downto 0);
+	imm_in:in	std_logic_vector(15 downto 0);--
+	Addr_Write_Reg_out:out	std_logic_vector(4 downto 0);
+	data1_out:out	std_logic_vector(31 downto 0);
+	data2_out:out	std_logic_vector(31 downto 0);
+	imm_out:out	std_logic_vector(15 downto 0);
+	SP_in:in	std_logic_vector(11 downto 0);
+	SP_out:out	std_logic_vector(11 downto 0));
 end;
 
 architecture one of ID_EX_Pipeline_Register is
 begin
-	process(reset,clk)begin
-		if (reset = '1') then
-			Register_Write_addr_out	<=	(others => '0');
-			data1_out				<=	(others => '0');
-			data2_out				<=	(others => '0');
-			imm_out					<=	(others => '0');
-			next_addr_out			<=	(others => '0');
-			ALU_Op_Code_out			<=	(others => '0');
-			ALU_src_out				<=	'0';
-			En_Integer_out			<=	'0';
-			En_Float_out			<=	'0';
-			Memory_Read_out			<=	'0';
-			Memory_Write_out		<=	'0';
-			Write_Register_out		<=	'0';
-			WB_MUX_out				<=	(others => '0');
-			
-		elsif (clk 'event and clk = '1')then
-			if (En = '1')then
-				Register_Write_addr_out	<=	Register_Write_addr_in;
-				data1_out				<=	data1_in;
-				data2_out				<=	data2_in;
-				imm_out					<=	imm_in;
-				next_addr_out			<=	next_addr_in;
-				ALU_Op_Code_out			<=	ALU_Op_Code_in;
-				ALU_src_out				<=	ALU_src_in;
-				En_Integer_out			<=	En_Integer_in;
-				En_Float_out			<=	En_Float_in;
-				Memory_Read_out			<=	Memory_Read_in;
-				Memory_Write_out		<=	Memory_Write_in;
-				Write_Register_out		<=	Write_Register_in;
-				WB_MUX_out				<=	WB_MUX_in;
+	process(clk,reset)begin
+		if(reset = '1')then
+			ALU_Op_Code_out<=(others=>'0');
+			ALU_src_out<='0';
+			En_Integer_out<='0';
+			En_Float_out<='0';
+			Memory_Read_out<='0';
+			Memory_Write_out<='0';
+			Reg_Write_En_out<='0';
+			WB_Mux_sel_out<='0';
+			CALL_flag_out<='0';
+			RET_flag_out<='0';
+			BR_flag_out<='0';
+			JMP_flag_out<='0';
+			Addr_Write_Reg_out<=(others=>'0');
+			data1_out<=(others=>'0');
+			data2_out<=(others=>'0');
+			imm_out<=(others=>'0');
+			SP_out <= (others=>'0');
+		elsif(clk 'event and clk = '1')then
+			if(En = '1')then
+				ALU_Op_Code_out<=ALU_Op_Code_in;
+				ALU_src_out<=ALU_src_in;
+				En_Integer_out<=En_Integer_in;
+				En_Float_out<=En_Float_in;
+				Memory_Read_out<=Memory_Read_in;
+				Memory_Write_out<=Memory_Write_in;
+				Reg_Write_En_out<=Reg_Write_En_in;
+				WB_Mux_sel_out<=WB_Mux_sel_in;
+				CALL_flag_out<=CALL_flag_in;
+				RET_flag_out<=RET_flag_in;
+				BR_flag_out<=BR_flag_in;
+				JMP_flag_out<=JMP_flag_in;
+				Addr_Write_Reg_out<=Addr_Write_Reg_in;
+				data1_out<=data1_in;
+				data2_out<=data2_in;
+				imm_out<=imm_in;
+				SP_out<=SP_in;
 			end if;
 		end if;
 	end process;
 end;
 
---
+-- SubModule: Forward_MUX --
 
 library ieee;
 use ieee.std_logic_1164.all;
 
-entity Stage2 is
+entity Forward_MUX is
 port(
-	clk:							in	std_logic;
-	reset:							in	std_logic;
-	
-	-- Interface with the Prev Stage:
-	Inst_in_stage1:					in	std_logic_vector(31 downto 0);
-	next_addr_in_stage1:			in	std_logic_vector(31 downto 0);
-	
-	-- Interface with the next Stage:
-	En_Write_stage5:				in	std_logic;
-	Write_Reg_stage5:				in	std_logic_vector(4  downto 0);
-	data_in_stage5:					in	std_logic_vector(31 downto 0);
-	
-	Register_Write_addr_out_stage3:	out	std_logic_vector(4  downto 0);
-	data1_out_stage3:				out	std_logic_vector(31 downto 0);
-	data2_out_stage3:				out	std_logic_vector(31 downto 0);
-	imm_out_stage3:					out	std_logic_vector(15 downto 0);
-	next_addr_out_stage3:			out	std_logic_vector(31 downto 0);
-	
-	-- Control signals goes to the next stage:
-	ALU_Op_Code_out_stage3:			out	std_logic_vector(5 downto 0);
-	ALU_src_out_stage3:				out	std_logic;
-	En_Integer_out_stage3:			out	std_logic;
-	En_Float_out_stage3:			out	std_logic;
-	Memory_Read_out_stage3:			out	std_logic;
-	Memory_Write_out_stage3:		out	std_logic;
-	Write_Register_out_stage3:		out	std_logic;
-	WB_MUX_out_stage3:				out	std_logic_vector(1 downto 0));
+	in0:in	std_logic_vector(31 downto 0);
+	in1:in	std_logic_vector(31 downto 0);
+	output:out	std_logic_vector(31 downto 0);
+	selector:in	std_logic);
 end;
 
-architecture one of Stage2 is
-	
-	-- / Components \ --
-	component ID_Control_Unit
-	port(
-		Instruction:	in	std_logic_vector(31 downto 0);
-		ALU_Op_Code:	out	std_logic_vector(5 downto 0);
-		ALU_src:		out	std_logic;
-		En_Integer:		out	std_logic;
-		En_Float:		out	std_logic;
-		Memory_Read:	out	std_logic;
-		Memory_Write:	out	std_logic;
-		Register_Read:	out std_logic;
-		Register_Write:	out	std_logic;
-		WB_MUX:			out	std_logic_vector(1 downto 0));
-	end component;
-	
-	component ID_Register_File
-	port(
-		clk:		in	std_logic;
-		reset:		in	std_logic;
-		En_Read:	in	std_logic;
-		En_Write:	in	std_logic;
-		Read_Reg1:	in	std_logic_vector(4  downto 0);
-		Read_Reg2:	in	std_logic_vector(4  downto 0);
-		Write_Reg:	in	std_logic_vector(4  downto 0);
-		data_in:	in	std_logic_vector(31 downto 0);
-		data1:		out	std_logic_vector(31 downto 0);
-		data2:		out	std_logic_vector(31 downto 0));
-	end component;
-	
-	component ID_EX_Pipeline_Register
-	port(
-
-		-- Inputs:
-		clk:						in	std_logic;
-		En:							in	std_logic;
-		reset:						in	std_logic;
-		Register_Write_addr_in:		in	std_logic_vector(4  downto 0);
-		data1_in:					in	std_logic_vector(31 downto 0);
-		data2_in:					in	std_logic_vector(31 downto 0);
-		imm_in:						in	std_Logic_vector(15 downto 0);
-		next_addr_in:				in	std_logic_vector(31 downto 0);
-	
-		-- Input Control Signals:
-		ALU_Op_Code_in:				in	std_logic_vector(5 downto 0);
-		ALU_src_in:					in	std_logic;
-		En_Integer_in:				in	std_logic;
-		En_Float_in:				in	std_logic;
-		Memory_Read_in:				in	std_logic;
-		Memory_Write_in:			in	std_logic;
-		Write_Register_in:			in	std_logic;
-		WB_MUX_in:					in	std_logic_vector(1 downto 0);
-	
-		-- Outputs:
-		Register_Write_addr_out:	out	std_logic_vector(4  downto 0);
-		data1_out:					out	std_logic_vector(31 downto 0);
-		data2_out:					out	std_logic_vector(31 downto 0);
-		imm_out:					out	std_logic_vector(15 downto 0);
-		next_addr_out:				out	std_logic_vector(31 downto 0);
-	
-		-- Output Control Signals:
-		ALU_Op_Code_out:			out	std_logic_vector(5  downto 0);
-		ALU_src_out:				out	std_logic;
-		En_Integer_out:				out	std_logic;
-		En_Float_out:				out	std_logic;
-		Memory_Read_out:			out	std_logic;
-		Memory_Write_out:			out	std_logic;
-		Write_Register_out:			out	std_logic;
-		WB_MUX_out:					out	std_logic_vector(1 downto 0));
-	end component;
-	-- / Components \ --
-
-	 -- / Signals \ --
-	 signal Instruction:		std_logic_vector(31 downto 0);
-	 signal ID_next_addr:		std_logic_vector(31 downto 0);
-	 signal ID_ALU_Op_Code:		std_logic_vector(5  downto 0);
-	 signal ID_ALU_src:			std_logic;
-	 signal ID_En_Integer:		std_logic;
-	 signal ID_En_Float:		std_logic;
-	 signal ID_Memory_Read:		std_logic;
-	 signal ID_Memory_Write:	std_logic;
-	 signal ID_Register_Read:	std_logic;
-	 signal ID_Register_Write:	std_logic;
-	 signal ID_WB_MUX:			std_logic_vector(1  downto 0);
-	 signal ID_data1:			std_logic_vector(31 downto 0);
-	 signal ID_data2:			std_logic_vector(31 downto 0);
-	 -- / Signals \ --
-
+architecture one of Forward_MUX is
 begin
-	
-	Instruction  <= Inst_in_stage1;
-	ID_next_addr <= next_addr_in_stage1;
-	
-	U1:	ID_Control_Unit port map(
-		Instruction		=>	Instruction,
-		
-		ALU_Op_Code		=>	ID_ALU_Op_Code,
-		ALU_src			=>	ID_ALU_src,
-		En_Integer		=>	ID_En_Integer,
-		En_Float		=>	ID_En_Float,
-		Memory_Read		=>	ID_Memory_Read,
-		Memory_Write	=>	ID_Memory_Write,
-		Register_Read	=>	ID_Register_Read,
-		Register_Write	=>	ID_Register_Write,
-		WB_MUX			=>	ID_WB_MUX);
-		
-	U2:	ID_Register_File port map(
-		clk			=>	(not clk),
-		reset		=>	reset,
-		En_Read		=>	ID_Register_Read,
-		En_Write	=>	En_Write_stage5,
-		Read_Reg1	=>	Instruction(25 downto 21),
-		Read_Reg2	=>	Instruction(20 downto 16),
-		Write_Reg	=>	Write_Reg_stage5,
-		data_in		=>	data_in_stage5,
-		data1		=>	ID_data1,
-		data2		=>	ID_data2);
-	
-	U3:	ID_EX_Pipeline_Register port map(
-		clk						=>	clk,
-		En						=>	'1',
-		reset					=>	reset,
-		Register_Write_addr_in	=>	Instruction(15 downto 11),
-		data1_in				=>	ID_data1,
-		data2_in				=>	ID_data2,
-		imm_in					=>	Instruction(15 downto 0),
-		next_addr_in			=>	ID_next_addr,
-		ALU_Op_Code_in			=>	ID_ALU_Op_Code,
-		ALU_src_in				=>	ID_ALU_src,
-		En_Integer_in			=>	ID_En_Integer,
-		En_Float_in				=>	ID_En_Float,
-		Memory_Read_in			=>	ID_Memory_Read,
-		Memory_Write_in			=>	ID_Memory_Write,
-		Write_Register_in		=>	ID_Register_Write,
-		WB_MUX_in				=>	ID_WB_MUX,
-		
-		Register_Write_addr_out	=>	Register_Write_addr_out_stage3,
-		data1_out				=>	data1_out_stage3,
-		data2_out				=>	data2_out_stage3,
-		imm_out					=>	imm_out_stage3,
-		next_addr_out			=>	next_addr_out_stage3,
-		ALU_Op_Code_out			=>	ALU_Op_Code_out_stage3,
-		ALU_src_out				=>	ALU_src_out_stage3,
-		En_Integer_out			=>	En_Integer_out_stage3,
-		En_Float_out			=>	En_Float_out_stage3,
-		Memory_Read_out			=>	Memory_Read_out_stage3,
-		Memory_Write_out		=>	Memory_Write_out_stage3,
-		Write_Register_out		=>	Write_Register_out_stage3,
-		WB_MUX_out				=>	WB_MUX_out_stage3);
+	output <= in1 when(selector = '1')else in0;
 end;
+
