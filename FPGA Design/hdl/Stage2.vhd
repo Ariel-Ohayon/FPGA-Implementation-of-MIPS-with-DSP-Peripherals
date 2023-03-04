@@ -244,7 +244,7 @@ entity Control_Unit is
 port(
 	Instruction:in	std_logic_vector(31 downto 0);
 	OP_Code:out	std_logic_vector(5 downto 0);
-	ALU_src:out	std_logic;
+	ALU_src:out	std_logic;						-- ALU_src = '0' => Register, ALU_src = '1' => imm
 	En_Integer:out	std_logic;
 	En_Float:out	std_logic;
 	Memory_Read:out	std_logic;
@@ -259,8 +259,90 @@ port(
 end;
 
 architecture one of Control_Unit is
+	
+	-- / Components \ --
+	component Control_Unit_Decoder
+	generic(Bits:integer:=2);
+	port(
+		inpt:	in	std_logic_vector(Bits-1 downto 0);
+		outpt:	out	std_logic_vector((2**Bits)-1 downto 0));
+	end component;
+	-- / Components \ --
+	
+	-- / Signals \ --
+	signal R_Type:			std_logic;
+	signal sOp_Code:		std_logic_vector(5 downto 0);
+	signal real_Op_Code:	std_logic_vector(5 downto 0);
+	signal Dec_out:			std_logic_vector(63 downto 0);
+	-- / Signals \ --
+	
+	signal sMemory_Read:	std_logic;
+	signal sMemory_Write:	std_logic;
+	signal sBR_flag,sJMP_flag,sCALL_flag,sRET_flag:	std_logic;
+	signal sEn_Float:	std_logic;
+	
 begin
+	
+	sOp_Code <= Instruction(31 downto 26);
+	R_Type		<= not (sOp_Code(0) or sOp_Code(1) or sOp_Code(2) or sOp_Code(3) or sOp_Code(4) or sOp_Code(5));
+	
+	real_Op_Code <= Instruction(5 downto 0) when(R_Type = '1') else sOp_Code;
+	OP_Code <= real_Op_Code;
+	
+	U1: Control_Unit_Decoder generic map(6) port map(real_Op_Code,Dec_out);
+	
+	sEn_Float <= Dec_out(0) or Dec_out(1) or Dec_out(2) or Dec_out(3);
+	En_Float  <= sEn_Float;
+	En_Integer <= not sEn_Float;
+	
+	ALU_src <= Dec_out(4)  or Dec_out(5)  or Dec_out(6)  or Dec_out(7)  or	--	ADDI   - DIVI
+			   Dec_out(20) or Dec_out(21) or Dec_out(22) or Dec_out(23) or	--	ADDUI  - DIVUI
+			   Dec_out(36) or Dec_out(37) or Dec_out(38) or Dec_out(39) or	--	ADDHI  - DIVHI
+			   Dec_out(52) or Dec_out(53) or Dec_out(54) or Dec_out(55) or	--	ADDUHI - DIVUHI
+			   Dec_out(8)  or Dec_out(9)  or Dec_out(10) or Dec_out(11) or	--	ANDI   - XORI
+			   Dec_out(40) or Dec_out(41) or Dec_out(42) or Dec_out(43);	--	ANDHI - XORHI
+	
+	sMemory_Read  <= Dec_out(1) and (not R_Type);
+	sMemory_Write <= Dec_out(2) and (not R_Type);
+	Memory_Read   <= sMemory_Read;
+	Memory_Write  <= sMemory_Write;
+	
+	Reg_Read_En  <= not (Dec_out(63) or Dec_out(62) or Dec_out(61) or Dec_out(56) or Dec_out(57) or sMemory_Read);
+	Reg_Write_En <= not (sBR_flag or sMemory_Write or sJMP_flag or sCALL_flag or sRET_flag or Dec_out(56) or Dec_out(57));
+	
+	WB_MUX_sel <= Dec_out(1) and (not R_Type);
+	
+	sJMP_flag  <= Dec_out(63);
+	sRET_flag  <= Dec_out(61);
+	sCALL_flag <= Dec_out(62);
+	JMP_flag   <= sJMP_flag;
+	RET_flag   <= sRET_flag;
+	CALL_flag  <= sCALL_flag;
+	
+	BR_flag  <= sBR_flag;
+	sBR_flag <= Dec_out(12) or Dec_out(13) or Dec_out(14) or Dec_out(15);
+	
+end;
 
+-- SubModule: Control_Unit_Decoder --
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_unsigned.all;
+
+entity Control_Unit_Decoder is
+generic(Bits:integer:=2);
+port(
+	inpt:	in	std_logic_vector(Bits-1 downto 0);
+	outpt:	out	std_logic_vector((2**Bits)-1 downto 0));
+end;
+
+architecture one of Control_Unit_Decoder is
+begin
+	process(inpt)begin
+		outpt <= (others=>'0');
+		outpt(CONV_INTEGER(inpt)) <= '1';
+	end process;
 end;
 
 -- SubModule: Register_File --
@@ -582,6 +664,7 @@ end;
 
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.std_logic_unsigned.all;
 
 entity StackPointer is
 port(
@@ -594,8 +677,20 @@ port(
 end;
 
 architecture one of StackPointer is
+	signal	Q:	std_logic_vector(11 downto 0):=x"F00";
 begin
-
+	output <= Q;
+	process(reset,clk)begin
+		if(reset = '1')then
+			Q <= x"F00";	-- Initial Value
+		elsif(clk 'event and clk = '1')then
+			if(pop = '1' and Q > x"F00")then
+				Q <= Q - 1;
+			elsif(push = '1' and Q < x"FFF")then
+				Q <= Q + 1;
+			end if;
+		end if;
+	end process;
 end;
 
 -- SubModule: ID_EX_Pipeline_Register --
