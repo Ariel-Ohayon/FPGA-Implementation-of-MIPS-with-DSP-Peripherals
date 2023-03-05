@@ -80,11 +80,15 @@ architecture one of Stage4 is
 	-- / Signals\ --
 	signal MUX_out:	std_logic_vector(11 downto 0);
 	signal Memory_out:	std_logic_vector(31 downto 0);
+	signal n_clk: std_logic;
+	signal or_sel:std_logic;
 	-- / Signals \ --
 
 begin
+	or_sel<=CALL_flag or RET_flag;
+	n_clk<=not clk;
 	U1: Data_Memory port map(
-			clk	=>	not clk,
+			clk	=>	n_clk,
 			address	=>	MUX_out,
 			data_in	=>	data1,
 			reset	=>	reset,
@@ -95,7 +99,7 @@ begin
 	U2: MEM_Addr_MUX port map(
 			in0	=>	Result,
 			in1	=>	SP_Data,
-			selector	=>	CALL_flag or RET_flag,
+			selector	=>	or_sel,
 			outpt	=>	MUX_out);
 
 	U3: Trans_BR port map(
@@ -243,4 +247,3 @@ begin
 		end if;
 	end process;
 end;
-
