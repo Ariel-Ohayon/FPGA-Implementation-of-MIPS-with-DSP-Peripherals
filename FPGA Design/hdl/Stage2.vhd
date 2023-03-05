@@ -677,7 +677,7 @@ port(
 end;
 
 architecture one of StackPointer is
-	signal	Q:	std_logic_vector(11 downto 0):=x"F00";
+	signal	Q:	std_logic_vector(11 downto 0):=x"F00";	-- Note: see Commit
 begin
 	output <= Q;
 	process(reset,clk)begin
