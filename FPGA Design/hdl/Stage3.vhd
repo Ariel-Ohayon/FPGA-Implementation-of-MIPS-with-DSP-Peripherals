@@ -191,9 +191,7 @@ end;
 
 library ieee;
 use ieee.std_logic_1164.all;
---use ieee.std_logic_unsigned.all;
---use ieee.std_logic_arith.all;
-use ieee.numeric_std.all;
+use ieee.std_logic_unsigned.all;
 
 entity ALU is
 port(
@@ -205,42 +203,324 @@ port(
 end;
 
 architecture one of ALU is
-	signal zero:	std_logic_vector(15 downto 0);
-	signal mul:		std_logic_vector(63 downto 0);
-	signal mulh:	std_logic_vector(63 downto 0);
+	
+	-- / Components \ --
+	component Division
+	generic(Bits:integer:=32);
+	port(
+		dividend:	in	std_logic_vector(Bits-1 downto 0);
+		divisor:	in	std_logic_vector(Bits-1 downto 0);
+		Q:			out	std_logic_vector(Bits-1 downto 0);
+		reminder:	out	std_logic_vector(Bits-1 downto 0));
+	end component;
+	
+	component ShiftRegister
+	port(
+		inpt1:	in	std_logic_vector(4 downto 0);
+		inpt2:	in	std_logic_vector(31 downto 0);
+		AL:		in	std_logic;						--	AL - Arithmetic (1) / Logic (0)
+		RL:		in	std_logic;						--	RL - Right (1) / Left (0)
+		outpt:	out	std_logic_vector(31 downto 0));
+	end component;
+	-- / Components \ --
+	
+	-- / Signals \ --
+	signal zero:			std_logic_vector(15 downto 0);
+	signal mul:				std_logic_vector(63 downto 0);
+	signal mulh:			std_logic_vector(63 downto 0);
+	signal div_result:		std_logic_vector(31 downto 0);
+	signal sel:				std_logic;
+	signal divisor:			std_logic_vector(31 downto 0);
+	signal ShiftReg_out:	std_logic_vector(31 downto 0);
+	signal signal_AL:		std_logic;
+	signal signal_RL:		std_logic;
+	-- / Signals \ --
+	
 begin
+
+	U1: Division generic map(32) port map(
+		dividend	=>	inpt2,
+		divisor		=>	divisor,
+		Q			=>	div_result,
+		reminder	=>	open);
+		
+	U2:	ShiftRegister port map(
+		inpt1	=>	inpt1(4 downto 0),
+		inpt2	=>	inpt2,
+		AL		=>	signal_AL,
+		RL		=>	signal_RL,
+		outpt	=>	ShiftReg_out);
+	
+	sel <= Op_Code(5);
+	
+	divisor <= inpt1(15 downto 0)&zero when(sel='1')else inpt1;
+	
 	process(inpt1,inpt2,En,Op_Code)begin
 		
---		mul	 <= inpt1 * inpt2;
---		mulh <= (inpt1(15 downto 0)&zero) * inpt2;
+		mul	 <= inpt1 * inpt2;
+		mulh <= (inpt1(15 downto 0)&zero) * inpt2;
 		outpt <= (others => '0');
+		signal_AL <= '0';
+		signal_RL <= '0';
 		
 		if(En = '1')then
 			case(Op_Code)is
---				when "000100" => outpt <= inpt1 + inpt2;												-- ADD
---				when "000101" => outpt <= inpt2 - inpt1;												-- SUB
---				when "000110" => outpt <= mul(31 downto 0);												-- MUL
-				when "000111" => outpt <= inpt2 / inpt1;											-- DIV
-				when "001000" => outpt <= inpt1 and inpt2;												-- AND
-				when "001001" => outpt <= inpt1 or  inpt2;												-- OR
-				when "001010" => outpt <= inpt1 nor inpt2;												-- NOR
-				when "001011" => outpt <= inpt1 xor inpt2;												-- XOR
---				when "011000" => outpt <= std_logic_vector(unsigned(inpt2) sll unsigned(inpt1));	-- SLL
---				when "011001" => outpt <= std_logic_vector(unsigned(inpt2) srl unsigned(inpt1));	-- SRL
---				when "011010" => outpt <= std_logic_vector(unsigned(inpt2) sla unsigned(inpt1));	-- SLA
---				when "011011" => outpt <= std_logic_vector(unsigned(inpt2) sra unsigned(inpt1));	-- SRA
---				when "100100" => outpt <= (inpt1(15 downto 0)&zero) + inpt2;							-- ADDHI
---				when "100101" => outpt <= inpt2 - (inpt1(15 downto 0)&zero);							-- SUBHI
---				when "100110" => outpt <= mulh(31 downto 0);											-- MULHI
-				when "100111" => outpt <= inpt2 / (inpt1&zero);										-- DIVHI
-				when "101000" => outpt <= inpt1(15 downto 0)&zero and inpt2;							-- ANDHI
-				when "101001" => outpt <= inpt1(15 downto 0)&zero or  inpt2;							-- ORHI
-				when "101010" => outpt <= inpt1(15 downto 0)&zero nor inpt2;							-- NORHI
-				when "101011" => outpt <= inpt1(15 downto 0)&zero xor inpt2;							-- XORHI
+				when "000100" => outpt <= inpt1 + inpt2;									-- ADD
+				when "000101" => outpt <= inpt2 - inpt1;									-- SUB
+				when "000110" => outpt <= mul(31 downto 0);									-- MUL
+				when "000111" => outpt <= div_result;										-- DIV
+				when "001000" => outpt <= inpt1 and inpt2;									-- AND
+				when "001001" => outpt <= inpt1 or  inpt2;									-- OR
+				when "001010" => outpt <= inpt1 nor inpt2;									-- NOR
+				when "001011" => outpt <= inpt1 xor inpt2;									-- XOR
+				when "011000" => outpt <= ShiftReg_out; signal_AL <= '0'; signal_RL <= '0';	-- SLL
+				when "011001" => outpt <= ShiftReg_out; signal_AL <= '0'; signal_RL <= '1';	-- SRL
+				when "011010" => outpt <= ShiftReg_out; signal_AL <= '1'; signal_RL <= '0';	-- SLA
+				when "011011" => outpt <= ShiftReg_out; signal_AL <= '1'; signal_RL <= '1';	-- SRA
+				when "100100" => outpt <= (inpt1(15 downto 0)&zero) + inpt2;				-- ADDHI
+				when "100101" => outpt <= inpt2 - (inpt1(15 downto 0)&zero);				-- SUBHI
+				when "100110" => outpt <= mulh(31 downto 0);								-- MULHI
+				when "100111" => outpt <= div_result;										-- DIVHI
+				when "101000" => outpt <= inpt1(15 downto 0)&zero and inpt2;				-- ANDHI
+				when "101001" => outpt <= inpt1(15 downto 0)&zero or  inpt2;				-- ORHI
+				when "101010" => outpt <= inpt1(15 downto 0)&zero nor inpt2;				-- NORHI
+				when "101011" => outpt <= inpt1(15 downto 0)&zero xor inpt2;				-- XORHI
 				when others=> outpt <= (others => '0');
 			end case;
 		else
 			outpt <= (others => '0');
+		end if;
+	end process;
+end;
+
+-- SubModule: Division --
+
+library ieee;
+use ieee.std_logic_1164.all;
+
+entity Division is
+generic(Bits:integer:=32);
+port(
+	dividend:	in	std_logic_vector(Bits-1 downto 0);
+	divisor:	in	std_logic_vector(Bits-1 downto 0);
+	Q:			out	std_logic_vector(Bits-1 downto 0);
+	reminder:	out	std_logic_vector(Bits-1 downto 0));
+end;
+
+architecture one of Division is
+	
+	type sigarr is array (0 to Bits) of std_logic_vector(Bits-1 downto 0);
+	
+	-- / Components \ --
+	component Half_Divide
+	generic(Bits:integer:=4);
+	port(
+		Xin:	in	std_logic_vector(Bits-1 downto 0);
+		A:		in	std_logic;
+		B:		in	std_logic_vector(Bits-1 downto 0);
+		Xout:	out	std_logic_vector(Bits-1 downto 0);
+		result:	out	std_logic);
+	end component;
+	-- / Components \ --
+	
+	-- / Signals \ --
+	signal sQ:			std_logic_vector(Bits-1 downto 0);
+	signal Xout:	sigarr;
+	-- / Signals \ --
+	
+begin
+	Q <= not sQ;
+	
+	Xout(0) <= (others => '0');
+	
+	Gen:for i in 0 to Bits-1 Generate
+		U:	Half_Divide generic map(Bits) port map(
+			Xin		=>	Xout(i),
+			A		=>	dividend(Bits-1-i),
+			B		=>	divisor,
+			Xout	=>	Xout(i+1),
+			result	=>	sQ(Bits-1-i));
+	end Generate;
+	
+	reminder <= Xout(Bits);
+end;
+
+-- SubModule: Half_Divide --
+
+library ieee;
+use ieee.std_logic_1164.all;
+
+entity Half_Divide is
+generic(Bits:integer:=4);
+port(
+	Xin:	in	std_logic_vector(Bits-1 downto 0);
+	A:		in	std_logic;
+	B:		in	std_logic_vector(Bits-1 downto 0);
+	Xout:	out	std_logic_vector(Bits-1 downto 0);
+	result:	out	std_logic);
+end;
+
+architecture one of Half_Divide is
+	-- / Components \ --
+	component Mux
+	generic(Bits:integer:=4);
+	port(
+		in0:	in	std_logic_vector(Bits-1 downto 0);
+		in1:	in	std_logic_vector(Bits-1 downto 0);
+		sel:	in	std_logic;
+		outpt:	out	std_logic_vector(Bits-1 downto 0));
+	end component;
+	
+	component n_Bits_Subtractor	-- diff = A - B
+	generic(Bits:integer:=4);
+	port(
+		A:		in	std_logic_vector(Bits-1 downto 0);
+		B:		in	std_logic_vector(Bits-1 downto 0);
+		Bin:	in	std_logic;
+		diff:	out	std_logic_vector(Bits-1 downto 0);
+		Bout:	out	std_logic);
+	end component;
+	-- / Components \ --
+	
+	-- / Signals \ --
+	signal Q:		std_logic;
+	signal in0:		std_logic_vector(Bits-1 downto 0);
+	signal concat:	std_logic_vector(Bits-1 downto 0);
+	-- / Signals \ --
+	
+	
+begin
+	concat <= Xin(Bits-2 downto 0) & A;
+	U1: Mux generic map(Bits) port map(
+		in0		=>	in0,
+		in1		=>	concat,
+		sel		=>	Q,
+		outpt	=>	Xout);
+	U2:	n_Bits_Subtractor generic map(Bits) port map(
+		A		=>	concat,
+		B		=>	B,
+		Bin		=>	'0',
+		diff	=>	in0,
+		Bout	=>	Q);
+	result <= Q;
+end;
+
+-- SubModule: Mux --
+library ieee;
+use ieee.std_logic_1164.all;
+
+entity Mux is
+generic(Bits:integer:=3);
+port(
+	in0:	in	std_logic_vector(Bits-1 downto 0);
+	in1:	in	std_logic_vector(Bits-1 downto 0);
+	sel:	in	std_logic;
+	outpt:	out	std_logic_vector(Bits-1 downto 0));
+end;
+
+architecture one of Mux is
+begin
+	outpt <= in1 when(sel = '1')else in0;
+end;
+
+-- SubModule: Subtractor --
+library ieee;
+use ieee.std_logic_1164.all;
+
+entity Subtractor is	-- diff = A - B
+port(
+	A:		in	std_logic;
+	B:		in	std_logic;
+	Bin:	in	std_logic;	-- Borrow in
+	diff:	out	std_logic;
+	Bout:	out	std_logic);	-- Borrow out
+end;
+
+architecture one of Subtractor is
+begin
+	diff <= A xor B xor Bin;
+	Bout <= ((not A)and B) or ((not A)and Bin) or (B and Bin);
+end;
+
+-- SubModule: n_Bits_Subtractor --
+
+library ieee;
+use ieee.std_logic_1164.all;
+
+entity n_Bits_Subtractor is	-- diff = A - B
+generic(Bits:integer:=4);
+port(
+	A:		in	std_logic_vector(Bits-1 downto 0);
+	B:		in	std_logic_vector(Bits-1 downto 0);
+	Bin:	in	std_logic;
+	diff:	out	std_logic_vector(Bits-1 downto 0);
+	Bout:	out	std_logic);
+end;
+
+architecture one of n_Bits_Subtractor is
+
+	-- / Components \ --
+	component Subtractor	-- diff = A - B
+	port(
+		A:		in	std_logic;
+		B:		in	std_logic;
+		Bin:	in	std_logic;	-- Borrow in
+		diff:	out	std_logic;
+		Bout:	out	std_logic);	-- Borrow out
+	end component;
+	-- / Components \ --
+	
+	-- / Signals \ --
+	signal Borrow:	std_logic_vector(Bits downto 0);
+	-- / Signals \ --
+begin
+	Gen:for i in 0 to Bits-1 Generate
+		Sub:	Subtractor port map(A(i),B(i),Borrow(i),diff(i),Borrow(i+1));
+	end Generate;
+	Borrow(0) <= Bin;
+	Bout <= Borrow(Bits);
+end;
+
+-- SubModule: ShiftRegister --
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_unsigned.all;
+
+entity ShiftRegister is
+port(
+	inpt1:	in	std_logic_vector(4 downto 0);
+	inpt2:	in	std_logic_vector(31 downto 0);
+	AL:		in	std_logic;						--	AL - Arithmetic (1) / Logic (0)
+	RL:		in	std_logic;						--	RL - Right (1) / Left (0)
+	outpt:	out	std_logic_vector(31 downto 0));
+end;
+
+architecture one of ShiftRegister is
+
+	signal zero:	std_logic_vector(31 downto 0);
+	signal mode:	std_logic_vector(1  downto 0);
+
+begin
+	
+	mode <= AL & RL;
+	zero <= (others => '0');
+	
+	process(inpt1,inpt2,mode)begin
+		outpt <= (others => '0');
+		if(inpt1 = "00000")then
+			outpt <= inpt2;
+		else
+			for i in 1 to 31 loop
+				if(CONV_INTEGER(inpt1) = i)then
+					case(mode)is
+						when "00"	=> outpt <= inpt2(31-i downto 0)&zero(i-1 downto 0);			-- Logic Left
+						when "01"	=> outpt <= zero(i-1 downto 0)&inpt2(31 downto i);				-- Logic Right
+						when "10"	=> outpt <= inpt2(31)&inpt2(30-i downto 0)&zero(i-1 downto 0);	-- Arithmetic Left
+						when others	=> outpt <= inpt2(31)&zero(i-2 downto 0)&inpt2(31 downto i);	-- Arithmetic Right
+					end case;
+				end if;
+			end loop;
 		end if;
 	end process;
 end;
