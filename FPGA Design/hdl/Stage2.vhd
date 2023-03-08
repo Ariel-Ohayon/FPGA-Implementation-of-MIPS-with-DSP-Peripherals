@@ -142,9 +142,11 @@ architecture one of Stage2 is
 	signal SP_out:	std_logic_vector(11 downto 0);
 	signal Reg1_out:	std_logic_vector(31 downto 0);
 	signal Reg2_out:	std_logic_vector(31 downto 0);
+	signal nclk: std_logic;
 	-- / Signals \ --
 
 begin
+	nclk<=not clk;
 	U1: Control_Unit port map(
 			Instruction	=>	Instruction,
 			OP_Code	=>	ALU_Op_Code,
@@ -163,7 +165,7 @@ begin
 
 	U2: Register_File port map(
 			reset	=>	reset,
-			clk	=>	not clk,
+			clk	=>	nclk,	--notice problem number 1
 			Addr_Read_Reg1	=>	Instruction(25 downto 21),
 			Addr_Read_Reg2	=>	Instruction(20 downto 16),
 			En_Read	=>	Reg_Read_En,
@@ -175,7 +177,7 @@ begin
 
 	U3: StackPointer port map(
 			reset	=>	reset,
-			clk	=>	not clk,
+			clk	=>	nclk, --notice problem number 1
 			pop	=>	RET_flag,
 			push	=>	CALL_flag,
 			output	=>	SP_out,
@@ -459,9 +461,74 @@ architecture one of Register_File is
 	signal sEn_Read:	std_logic_vector(31 downto 0);
 	signal sdata1:		std_logic_vector(31 downto 0);
 	signal sdata2:		std_logic_vector(31 downto 0);
+	signal and_en0: std_logic;
+	signal and_en1: std_logic;
+	signal and_en2: std_logic;
+	signal and_en3: std_logic;
+	signal and_en4: std_logic;
+	signal and_en5: std_logic;
+	signal and_en6: std_logic;
+	signal and_en7: std_logic;
+	signal and_en8: std_logic;
+	signal and_en9: std_logic;
+	signal and_en10: std_logic;
+	signal and_en11: std_logic;
+	signal and_en12: std_logic;
+	signal and_en13: std_logic;
+	signal and_en14: std_logic;
+	signal and_en15: std_logic;
+	signal and_en16: std_logic;
+	signal and_en17: std_logic;
+	signal and_en18: std_logic;
+	signal and_en19: std_logic;
+	signal and_en20: std_logic;
+	signal and_en21: std_logic;
+	signal and_en22: std_logic;
+	signal and_en23: std_logic;
+	signal and_en24: std_logic;
+	signal and_en25: std_logic;
+	signal and_en26: std_logic;
+	signal and_en27: std_logic;
+	signal and_en28: std_logic;
+	signal and_en29: std_logic;
+	signal and_en30: std_logic;
+	signal and_en31: std_logic;
 	-- / Signals \ --
 
 begin
+and_en0<=En_Write and En_Reg(0);--notice problem number 1
+and_en1<=En_Write and En_Reg(1);
+and_en2<=En_Write and En_Reg(2);
+and_en3<=En_Write and En_Reg(3);
+and_en4<=En_Write and En_Reg(4);
+and_en5<=En_Write and En_Reg(5);
+and_en6<=En_Write and En_Reg(6);
+and_en7<=En_Write and En_Reg(7);
+and_en8<=En_Write and En_Reg(8);
+and_en9<=En_Write and En_Reg(9);
+and_en10<=En_Write and En_Reg(10);
+and_en11<=En_Write and En_Reg(11);
+and_en12<=En_Write and En_Reg(12);
+and_en13<=En_Write and En_Reg(13);
+and_en14<=En_Write and En_Reg(14);
+and_en15<=En_Write and En_Reg(15);
+and_en16<=En_Write and En_Reg(16);
+and_en17<=En_Write and En_Reg(17);
+and_en18<=En_Write and En_Reg(18);
+and_en19<=En_Write and En_Reg(19);
+and_en20<=En_Write and En_Reg(20);
+and_en21<=En_Write and En_Reg(21);
+and_en22<=En_Write and En_Reg(22);
+and_en23<=En_Write and En_Reg(23);
+and_en24<=En_Write and En_Reg(24);
+and_en25<=En_Write and En_Reg(25);
+and_en26<=En_Write and En_Reg(26);
+and_en27<=En_Write and En_Reg(27);
+and_en28<=En_Write and En_Reg(28);
+and_en29<=En_Write and En_Reg(29);
+and_en30<=En_Write and En_Reg(30);
+and_en31<=En_Write and En_Reg(31);--notice problem number 1
+
 	sEn_Read <= (others => En_Read);
 	U1:	Rgister_File_Decoder generic map(5) port map(Addr_Write_Reg,En_Reg);
 	
@@ -498,38 +565,38 @@ begin
 	data1 <= sEn_Read and sdata1;
 	data2 <= sEn_Read and sdata2;
 	
-	Reg0:	Register_File_Register port map(clk,reset,En_Write and En_Reg(0),data_in,Mux_in0);
-	Reg1:	Register_File_Register port map(clk,reset,En_Write and En_Reg(1),data_in,Mux_in1);
-	Reg2:	Register_File_Register port map(clk,reset,En_Write and En_Reg(2),data_in,Mux_in2);
-	Reg3:	Register_File_Register port map(clk,reset,En_Write and En_Reg(3),data_in,Mux_in3);
-	Reg4:	Register_File_Register port map(clk,reset,En_Write and En_Reg(4),data_in,Mux_in4);
-	Reg5:	Register_File_Register port map(clk,reset,En_Write and En_Reg(5),data_in,Mux_in5);
-	Reg6:	Register_File_Register port map(clk,reset,En_Write and En_Reg(6),data_in,Mux_in6);
-	Reg7:	Register_File_Register port map(clk,reset,En_Write and En_Reg(7),data_in,Mux_in7);
-	Reg8:	Register_File_Register port map(clk,reset,En_Write and En_Reg(8),data_in,Mux_in8);
-	Reg9:	Register_File_Register port map(clk,reset,En_Write and En_Reg(9),data_in,Mux_in9);
-	Reg10:	Register_File_Register port map(clk,reset,En_Write and En_Reg(10),data_in,Mux_in10);
-	Reg11:	Register_File_Register port map(clk,reset,En_Write and En_Reg(11),data_in,Mux_in11);
-	Reg12:	Register_File_Register port map(clk,reset,En_Write and En_Reg(12),data_in,Mux_in12);
-	Reg13:	Register_File_Register port map(clk,reset,En_Write and En_Reg(13),data_in,Mux_in13);
-	Reg14:	Register_File_Register port map(clk,reset,En_Write and En_Reg(14),data_in,Mux_in14);
-	Reg15:	Register_File_Register port map(clk,reset,En_Write and En_Reg(15),data_in,Mux_in15);
-	Reg16:	Register_File_Register port map(clk,reset,En_Write and En_Reg(16),data_in,Mux_in16);
-	Reg17:	Register_File_Register port map(clk,reset,En_Write and En_Reg(17),data_in,Mux_in17);
-	Reg18:	Register_File_Register port map(clk,reset,En_Write and En_Reg(18),data_in,Mux_in18);
-	Reg19:	Register_File_Register port map(clk,reset,En_Write and En_Reg(19),data_in,Mux_in19);
-	Reg20:	Register_File_Register port map(clk,reset,En_Write and En_Reg(20),data_in,Mux_in20);
-	Reg21:	Register_File_Register port map(clk,reset,En_Write and En_Reg(21),data_in,Mux_in21);
-	Reg22:	Register_File_Register port map(clk,reset,En_Write and En_Reg(22),data_in,Mux_in22);
-	Reg23:	Register_File_Register port map(clk,reset,En_Write and En_Reg(23),data_in,Mux_in23);
-	Reg24:	Register_File_Register port map(clk,reset,En_Write and En_Reg(24),data_in,Mux_in24);
-	Reg25:	Register_File_Register port map(clk,reset,En_Write and En_Reg(25),data_in,Mux_in25);
-	Reg26:	Register_File_Register port map(clk,reset,En_Write and En_Reg(26),data_in,Mux_in26);
-	Reg27:	Register_File_Register port map(clk,reset,En_Write and En_Reg(27),data_in,Mux_in27);
-	Reg28:	Register_File_Register port map(clk,reset,En_Write and En_Reg(28),data_in,Mux_in28);
-	Reg29:	Register_File_Register port map(clk,reset,En_Write and En_Reg(29),data_in,Mux_in29);
-	Reg30:	Register_File_Register port map(clk,reset,En_Write and En_Reg(30),data_in,Mux_in30);
-	Reg31:	Register_File_Register port map(clk,reset,En_Write and En_Reg(31),data_in,Mux_in31);
+	Reg0:	Register_File_Register port map(clk,reset,and_en0,data_in,Mux_in0);--notice problem number 1
+	Reg1:	Register_File_Register port map(clk,reset,and_en1,data_in,Mux_in1);
+	Reg2:	Register_File_Register port map(clk,reset,and_en2,data_in,Mux_in2);
+	Reg3:	Register_File_Register port map(clk,reset,and_en3,data_in,Mux_in3);
+	Reg4:	Register_File_Register port map(clk,reset,and_en4,data_in,Mux_in4);
+	Reg5:	Register_File_Register port map(clk,reset,and_en5,data_in,Mux_in5);
+	Reg6:	Register_File_Register port map(clk,reset,and_en6,data_in,Mux_in6);
+	Reg7:	Register_File_Register port map(clk,reset,and_en7,data_in,Mux_in7);
+	Reg8:	Register_File_Register port map(clk,reset,and_en8,data_in,Mux_in8);
+	Reg9:	Register_File_Register port map(clk,reset,and_en9,data_in,Mux_in9);
+	Reg10:	Register_File_Register port map(clk,reset,and_en10,data_in,Mux_in10);
+	Reg11:	Register_File_Register port map(clk,reset,and_en11,data_in,Mux_in11);
+	Reg12:	Register_File_Register port map(clk,reset,and_en12,data_in,Mux_in12);
+	Reg13:	Register_File_Register port map(clk,reset,and_en13,data_in,Mux_in13);
+	Reg14:	Register_File_Register port map(clk,reset,and_en14,data_in,Mux_in14);
+	Reg15:	Register_File_Register port map(clk,reset,and_en15,data_in,Mux_in15);
+	Reg16:	Register_File_Register port map(clk,reset,and_en16,data_in,Mux_in16);
+	Reg17:	Register_File_Register port map(clk,reset,and_en17,data_in,Mux_in17);
+	Reg18:	Register_File_Register port map(clk,reset,and_en18,data_in,Mux_in18);
+	Reg19:	Register_File_Register port map(clk,reset,and_en19,data_in,Mux_in19);
+	Reg20:	Register_File_Register port map(clk,reset,and_en20,data_in,Mux_in20);
+	Reg21:	Register_File_Register port map(clk,reset,and_en21,data_in,Mux_in21);
+	Reg22:	Register_File_Register port map(clk,reset,and_en22,data_in,Mux_in22);
+	Reg23:	Register_File_Register port map(clk,reset,and_en23,data_in,Mux_in23);
+	Reg24:	Register_File_Register port map(clk,reset,and_en24,data_in,Mux_in24);
+	Reg25:	Register_File_Register port map(clk,reset,and_en25,data_in,Mux_in25);
+	Reg26:	Register_File_Register port map(clk,reset,and_en26,data_in,Mux_in26);
+	Reg27:	Register_File_Register port map(clk,reset,and_en27,data_in,Mux_in27);
+	Reg28:	Register_File_Register port map(clk,reset,and_en28,data_in,Mux_in28);
+	Reg29:	Register_File_Register port map(clk,reset,and_en29,data_in,Mux_in29);
+	Reg30:	Register_File_Register port map(clk,reset,and_en30,data_in,Mux_in30);
+	Reg31:	Register_File_Register port map(clk,reset,and_en31,data_in,Mux_in31);--notice problem number 1
 end;
 
 -- SubModule: Rgister_File_Decoder --
@@ -630,7 +697,7 @@ begin
 	Reg28	when	"11100",	-- 28
 	Reg29	when	"11101",	-- 29
 	Reg30	when	"11110",	-- 30
-	Reg31	when	"11111";	-- 31
+	Reg31	when	others;	-- 31 (problem number 2)
 end;
 
 -- Submodule: Register_File_Register --
@@ -801,4 +868,3 @@ architecture one of Forward_MUX is
 begin
 	output <= in1 when(selector = '1')else in0;
 end;
-
