@@ -113,10 +113,12 @@ stage2 DUT(
 	#20;
 	
 	t_Reg_Write_En_in=1'd0;
-	t_Instruction = 32'h00402804;
+	t_Instruction=32'h00a01004;
 	#20;
-	t_Instruction=32'h00e21804;
+	t_Instruction=32'h00623804;
+	#20;
+	t_Instruction =32'h10a30007;
 	#20;
 end
 endmodule
-// run 260ns
+// run 280ns	//
