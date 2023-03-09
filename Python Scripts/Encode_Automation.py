@@ -395,7 +395,7 @@ def I_Type_Encode(cmd):
         opcode = 43
         
     
-    Encode_cmd = (opcode*(2**26)) + (rt*(2**21)) + (rs*(2**16)) + imm
+    Encode_cmd = (opcode*(2**26)) + (rs*(2**21)) + (rt*(2**16)) + imm
     
     return Encode_cmd
 
