@@ -50,7 +50,8 @@ architecture one of Stage2 is
 		JMP_flag:	out	std_logic;
 		CALL_flag:	out	std_logic;
 		RET_flag:	out	std_logic;
-		BR_flag:	out	std_logic);
+		BR_flag:	out	std_logic;
+		Addr_MUX_sel:	out	std_logic);
 	end component;
 	component Register_File
 	port(
@@ -120,6 +121,13 @@ architecture one of Stage2 is
 		output:	out	std_logic_vector(31 downto 0);
 		selector:	in	std_logic);
 	end component;
+	component Reg_Addr_MUX
+	port(
+		selector:	in	std_logic;
+		R_Type_addr:	in	std_logic_vector(4 downto 0);
+		I_Type_Addr:	in	std_logic_vector(4 downto 0);
+		outpt:	out	std_logic_vector(4 downto 0));
+	end component;
 	-- / Components \ --
 
 	-- / Signals\ --
@@ -142,6 +150,8 @@ architecture one of Stage2 is
 	signal Reg1_out:	std_logic_vector(31 downto 0);
 	signal Reg2_out:	std_logic_vector(31 downto 0);
 	signal n_clk:	std_logic;
+	signal Addr_MUX_sel:	std_logic;
+	signal Addr_Reg_Write:	std_logic_vector(4 downto 0);
 	-- / Signals \ --
 
 begin
@@ -159,7 +169,8 @@ begin
 			JMP_flag	=>	JMP_flag,
 			CALL_flag	=>	CALL_flag,
 			RET_flag	=>	RET_flag,
-			BR_flag	=>	BR_flag);
+			BR_flag	=>	BR_flag,
+			Addr_MUX_sel	=>	Addr_MUX_sel);
 
 	U2: Register_File port map(
 			reset	=>	reset,
@@ -208,7 +219,7 @@ begin
 			BR_flag_out	=>	BR_flag_out,
 			JMP_flag_in	=>	JMP_flag,
 			JMP_flag_out	=>	JMP_flag_out,
-			Addr_Write_Reg_in	=>	Instruction(15 downto 11),
+			Addr_Write_Reg_in	=>	Addr_Reg_Write,
 			data1_in	=>	data1,
 			data2_in	=>	data2,
 			imm_in	=>	Instruction(15 downto 0),
@@ -230,6 +241,12 @@ begin
 			in1	=>	Forward_Data_in,
 			output	=>	data2,
 			selector	=>	Forward_Selector(1));
+
+	U7: Reg_Addr_MUX port map(
+			selector	=>	Addr_MUX_sel,
+			R_Type_addr	=>	Instruction(15 downto 11),
+			I_Type_Addr	=>	Instruction(25 downto 21),
+			outpt	=>	Addr_Reg_Write);
 
 	F_Read_Reg_En <= Reg_Read_En;
 	n_clk <= not clk;
@@ -255,7 +272,8 @@ port(
 	JMP_flag:out	std_logic;
 	CALL_flag:out	std_logic;
 	RET_flag:out	std_logic;
-	BR_flag:out	std_logic);
+	BR_flag:out	std_logic;
+	Addr_MUX_sel:	out	std_logic);
 end;
 
 architecture one of Control_Unit is
@@ -288,6 +306,8 @@ begin
 	
 	real_Op_Code <= Instruction(5 downto 0) when(R_Type = '1') else sOp_Code;
 	OP_Code <= real_Op_Code;
+	
+	Addr_MUX_sel <= R_Type;
 	
 	U1: Control_Unit_Decoder generic map(6) port map(real_Op_Code,Dec_out);
 	
@@ -343,6 +363,7 @@ begin
 		outpt(CONV_INTEGER(inpt)) <= '1';
 	end process;
 end;
+
 
 -- SubModule: Register_File --
 
@@ -503,7 +524,7 @@ begin
 		Reg_En(i) <= En_Write and En_Reg(i);
 	end Generate;
 	
-	Reg0:	Register_File_Register port map(clk,reset,Reg_En(0),(others=>'0'),Mux_in0);		--	TB_Error: Disable write function ro R0
+	Reg0:	Register_File_Register port map(clk,reset,Reg_En(0),(others => '0'),Mux_in0);
 	Reg1:	Register_File_Register port map(clk,reset,Reg_En(1),data_in,Mux_in1);
 	Reg2:	Register_File_Register port map(clk,reset,Reg_En(2),data_in,Mux_in2);
 	Reg3:	Register_File_Register port map(clk,reset,Reg_En(3),data_in,Mux_in3);
@@ -805,3 +826,22 @@ architecture one of Forward_MUX is
 begin
 	output <= in1 when(selector = '1')else in0;
 end;
+
+-- SubModule: Reg_Addr_MUX --
+
+library ieee;
+use ieee.std_logic_1164.all;
+
+entity Reg_Addr_MUX is
+port(
+	selector:		in	std_logic;
+	R_Type_addr:	in	std_logic_vector(4 downto 0);
+	I_Type_addr:	in	std_logic_vector(4 downto 0);
+	outpt:			out	std_logic_vector(4 downto 0));
+end;
+
+architecture one of Reg_Addr_MUX is
+begin
+	outpt <= R_Type_addr when (selector = '1') else I_Type_addr;
+end;
+
