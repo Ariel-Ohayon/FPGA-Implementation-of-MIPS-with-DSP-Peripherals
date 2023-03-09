@@ -503,7 +503,7 @@ begin
 		Reg_En(i) <= En_Write and En_Reg(i);
 	end Generate;
 	
-	Reg0:	Register_File_Register port map(clk,reset,Reg_En(0),data_in,Mux_in0);
+	Reg0:	Register_File_Register port map(clk,reset,Reg_En(0),(others=>'0'),Mux_in0);		--	TB_Error: Disable write function ro R0
 	Reg1:	Register_File_Register port map(clk,reset,Reg_En(1),data_in,Mux_in1);
 	Reg2:	Register_File_Register port map(clk,reset,Reg_En(2),data_in,Mux_in2);
 	Reg3:	Register_File_Register port map(clk,reset,Reg_En(3),data_in,Mux_in3);
