@@ -7,7 +7,7 @@ port(
 	reset:	in	std_logic;
 	Memory_Read:	in	std_logic;
 	Memory_Write:	in	std_logic;
-	SP_Data:	in	std_logic_vector(11 downto 0);
+	SP_Data:	in	std_logic_vector(7 downto 0);
 	data1:	in	std_logic_vector(31 downto 0);
 	Result:	in	std_logic_vector(31 downto 0);
 	CALL_flag:	in	std_logic;
@@ -45,7 +45,7 @@ architecture one of Stage4 is
 	component MEM_Addr_MUX
 	port(
 		in0:	in	std_logic_vector(31 downto 0);
-		in1:	in	std_logic_vector(11 downto 0);
+		in1:	in	std_logic_vector(7 downto 0);
 		selector:	in	std_logic;
 		outpt:	out	std_logic_vector(11 downto 0));
 	end component;
@@ -80,15 +80,11 @@ architecture one of Stage4 is
 	-- / Signals\ --
 	signal MUX_out:	std_logic_vector(11 downto 0);
 	signal Memory_out:	std_logic_vector(31 downto 0);
-	signal n_clk: std_logic;
-	signal or_sel:std_logic;
 	-- / Signals \ --
 
 begin
-	or_sel<=CALL_flag or RET_flag;
-	n_clk<=not clk;
 	U1: Data_Memory port map(
-			clk	=>	n_clk,
+			clk	=>	not clk,
 			address	=>	MUX_out,
 			data_in	=>	data1,
 			reset	=>	reset,
@@ -99,7 +95,7 @@ begin
 	U2: MEM_Addr_MUX port map(
 			in0	=>	Result,
 			in1	=>	SP_Data,
-			selector	=>	or_sel,
+			selector	=>	CALL_flag or RET_flag,
 			outpt	=>	MUX_out);
 
 	U3: Trans_BR port map(
@@ -171,17 +167,16 @@ use ieee.std_logic_1164.all;
 entity MEM_Addr_MUX is
 port(
 	in0:in	std_logic_vector(31 downto 0);
-	in1:in	std_logic_vector(11 downto 0);
+	in1:in	std_logic_vector(7 downto 0);
 	selector:in	std_logic;
 	outpt:out	std_logic_vector(11 downto 0));
 end;
 
 architecture one of MEM_Addr_MUX is
 begin
-	outpt <= in1 when(selector = '1') else
+	outpt <= x"0"&in1 when(selector = '1') else
 			 in0(11 downto 0);
 end;
-
 
 -- SubModule: Trans_BR --
 
@@ -247,3 +242,4 @@ begin
 		end if;
 	end process;
 end;
+
