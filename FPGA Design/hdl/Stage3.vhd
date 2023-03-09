@@ -5,7 +5,7 @@ entity Stage3 is
 port(
 	clk:	in	std_logic;
 	reset:	in	std_logic;
-	SP_Data:	in	std_logic_vector(11 downto 0);
+	SP_Data:	in	std_logic_vector(7 downto 0);
 	ALU_Op_Code:	in	std_logic_vector(5 downto 0);
 	ALU_src:	in	std_logic;
 	En_Integer:	in	std_logic;
@@ -31,7 +31,7 @@ port(
 	BR_Ex_out:	out	std_logic;
 	CALL_flag_out:	out	std_logic;
 	RET_flag_out:	out	std_logic;
-	SP_Data_out:	out	std_logic_vector(11 downto 0);
+	SP_Data_out:	out	std_logic_vector(7 downto 0);
 	data1_out:	out	std_logic_vector(31 downto 0);
 	JMP_flag_in:	in	std_logic;
 	JMP_flag_out:	out	std_logic;
@@ -97,8 +97,8 @@ architecture one of Stage3 is
 		RET_flag_out:	out	std_logic;
 		JMP_flag_in:	in	std_logic;
 		JMP_flag_out:	out	std_logic;
-		SP_Data_in:	in	std_logic_vector(11 downto 0);
-		SP_Data_out:	out	std_logic_vector(11 downto 0);
+		SP_Data_in:	in	std_logic_vector(7 downto 0);
+		SP_Data_out:	out	std_logic_vector(7 downto 0);
 		data1_in:	in	std_logic_vector(31 downto 0);
 		data1_out:	out	std_logic_vector(31 downto 0));
 	end component;
@@ -612,8 +612,8 @@ port(
 	RET_flag_out:out	std_logic;
 	JMP_flag_in:in	std_logic;
 	JMP_flag_out:out	std_logic;
-	SP_Data_in:in	std_logic_vector(11 downto 0);
-	SP_Data_out:out	std_logic_vector(11 downto 0);
+	SP_Data_in:in	std_logic_vector(7 downto 0);
+	SP_Data_out:out	std_logic_vector(7 downto 0);
 	data1_in:in	std_logic_vector(31 downto 0);
 	data1_out:out	std_logic_vector(31 downto 0));
 end;
@@ -652,6 +652,7 @@ begin
 		end if;
 	end process;
 end;
+
 
 -- SubModule: JMP_BR_Tester --
 
@@ -704,4 +705,3 @@ begin
 		end if;
 	end process;
 end;
-
