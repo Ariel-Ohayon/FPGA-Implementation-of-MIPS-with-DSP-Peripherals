@@ -291,23 +291,22 @@ begin
 	
 	U1: Control_Unit_Decoder generic map(6) port map(real_Op_Code,Dec_out);
 	
-	sEn_Float <= Dec_out(0) or Dec_out(1) or Dec_out(2) or Dec_out(3);
+	sEn_Float <= (Dec_out(0) or Dec_out(1) or Dec_out(2) or Dec_out(3)) and R_Type;
 	En_Float  <= sEn_Float;
-	En_Integer <= not sEn_Float;
+	En_Integer <= (not sEn_Float);
 	
-	ALU_src <= Dec_out(4)  or Dec_out(5)  or Dec_out(6)  or Dec_out(7)  or	--	ADDI   - DIVI
-			   Dec_out(20) or Dec_out(21) or Dec_out(22) or Dec_out(23) or	--	ADDUI  - DIVUI
-			   Dec_out(36) or Dec_out(37) or Dec_out(38) or Dec_out(39) or	--	ADDHI  - DIVHI
-			   Dec_out(52) or Dec_out(53) or Dec_out(54) or Dec_out(55) or	--	ADDUHI - DIVUHI
-			   Dec_out(8)  or Dec_out(9)  or Dec_out(10) or Dec_out(11) or	--	ANDI   - XORI
-			   Dec_out(40) or Dec_out(41) or Dec_out(42) or Dec_out(43);	--	ANDHI - XORHI
+	ALU_src <= (not R_Type) and (Dec_out(4)  or Dec_out(5)  or Dec_out(6)  or Dec_out(7)  or 
+			   Dec_out(36) or Dec_out(37) or Dec_out(38) or Dec_out(39) or 
+			   Dec_out(8)  or Dec_out(9)  or Dec_out(10) or Dec_out(11) or
+			   Dec_out(40) or Dec_out(41) or Dec_out(42) or Dec_out(43) or
+			   Dec_out(1)  or Dec_out(2));
 	
 	sMemory_Read  <= Dec_out(1) and (not R_Type);
 	sMemory_Write <= Dec_out(2) and (not R_Type);
 	Memory_Read   <= sMemory_Read;
 	Memory_Write  <= sMemory_Write;
 	
-	Reg_Read_En  <= not (Dec_out(63) or Dec_out(62) or Dec_out(61) or Dec_out(56) or Dec_out(57) or sMemory_Read);
+	Reg_Read_En  <= sMemory_Read or (not (Dec_out(63) or Dec_out(62) or Dec_out(61) or Dec_out(56) or Dec_out(57)));
 	Reg_Write_En <= not (sBR_flag or sMemory_Write or sJMP_flag or sCALL_flag or sRET_flag or Dec_out(56) or Dec_out(57));
 	
 	WB_MUX_sel <= Dec_out(1) and (not R_Type);
@@ -806,4 +805,3 @@ architecture one of Forward_MUX is
 begin
 	output <= in1 when(selector = '1')else in0;
 end;
-
