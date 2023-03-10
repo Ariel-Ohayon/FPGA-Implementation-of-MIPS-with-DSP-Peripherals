@@ -118,6 +118,7 @@ architecture one of Stage3 is
 	signal ALU_out:	std_logic_vector(31 downto 0);
 	signal FPU_out:	std_logic_vector(31 downto 0);
 	signal BR_Ex:	std_logic;
+	signal En_Op:	std_logic_vector(1 downto 0);
 	-- / Signals \ --
 
 begin
@@ -144,7 +145,7 @@ begin
 	U4: Result_Module port map(
 			in0	=>	ALU_out,
 			in1	=>	FPU_out,
-			selector	=>	En_Integer & En_Float,
+			selector	=>	En_Op,
 			outpt	=>	Result);
 
 	U5: EX_MEM_Pipeline_Register port map(
@@ -185,6 +186,7 @@ begin
 			Op_Code	=>	ALU_Op_Code);
 
 	Result_out_no_Pipeline <= Result;
+	En_Op <= En_Integer & En_Float;
 end;
 
 -- SubModule: ALU --
@@ -234,6 +236,8 @@ architecture one of ALU is
 	signal ShiftReg_out:	std_logic_vector(31 downto 0);
 	signal signal_AL:		std_logic;
 	signal signal_RL:		std_logic;
+	signal Shift_En:		std_logic;
+	signal soutpt:			std_logic_vector(31 downto 0);
 	-- / Signals \ --
 	
 begin
@@ -252,45 +256,49 @@ begin
 		outpt	=>	ShiftReg_out);
 	
 	sel <= Op_Code(5);
-	
+	zero <= (others => '0');
 	divisor <= inpt1(15 downto 0)&zero when(sel='1')else inpt1;
 	
 	process(inpt1,inpt2,En,Op_Code)begin
 		
+		Shift_En <= '0';
 		mul	 <= inpt1 * inpt2;
 		mulh <= (inpt1(15 downto 0)&zero) * inpt2;
-		outpt <= (others => '0');
+		soutpt <= (others => '0');
 		signal_AL <= '0';
 		signal_RL <= '0';
 		
 		if(En = '1')then
 			case(Op_Code)is
-				when "000100" => outpt <= inpt1 + inpt2;									-- ADD
-				when "000101" => outpt <= inpt2 - inpt1;									-- SUB
-				when "000110" => outpt <= mul(31 downto 0);									-- MUL
-				when "000111" => outpt <= div_result;										-- DIV
-				when "001000" => outpt <= inpt1 and inpt2;									-- AND
-				when "001001" => outpt <= inpt1 or  inpt2;									-- OR
-				when "001010" => outpt <= inpt1 nor inpt2;									-- NOR
-				when "001011" => outpt <= inpt1 xor inpt2;									-- XOR
-				when "011000" => outpt <= ShiftReg_out; signal_AL <= '0'; signal_RL <= '0';	-- SLL
-				when "011001" => outpt <= ShiftReg_out; signal_AL <= '0'; signal_RL <= '1';	-- SRL
-				when "011010" => outpt <= ShiftReg_out; signal_AL <= '1'; signal_RL <= '0';	-- SLA
-				when "011011" => outpt <= ShiftReg_out; signal_AL <= '1'; signal_RL <= '1';	-- SRA
-				when "100100" => outpt <= (inpt1(15 downto 0)&zero) + inpt2;				-- ADDHI
-				when "100101" => outpt <= inpt2 - (inpt1(15 downto 0)&zero);				-- SUBHI
-				when "100110" => outpt <= mulh(31 downto 0);								-- MULHI
-				when "100111" => outpt <= div_result;										-- DIVHI
-				when "101000" => outpt <= inpt1(15 downto 0)&zero and inpt2;				-- ANDHI
-				when "101001" => outpt <= inpt1(15 downto 0)&zero or  inpt2;				-- ORHI
-				when "101010" => outpt <= inpt1(15 downto 0)&zero nor inpt2;				-- NORHI
-				when "101011" => outpt <= inpt1(15 downto 0)&zero xor inpt2;				-- XORHI
-				when others=> outpt <= (others => '0');
+				when "000100" => soutpt <= inpt1 + inpt2;									-- ADD
+				when "000101" => soutpt <= inpt2 - inpt1;									-- SUB
+				when "000110" => soutpt <= mul(31 downto 0);									-- MUL
+				when "000111" => soutpt <= div_result;										-- DIV
+				when "001000" => soutpt <= inpt1 and inpt2;									-- AND
+				when "001001" => soutpt <= inpt1 or  inpt2;									-- OR
+				when "001010" => soutpt <= inpt1 nor inpt2;									-- NOR
+				when "001011" => soutpt <= inpt1 xor inpt2;									-- XOR
+				when "011000" => Shift_En <= '1'; signal_AL <= '0'; signal_RL <= '0';	-- SLL
+				when "011001" => Shift_En <= '1'; signal_AL <= '0'; signal_RL <= '1';	-- SRL
+				when "011010" => Shift_En <= '1'; signal_AL <= '1'; signal_RL <= '0';	-- SLA
+				when "011011" => Shift_En <= '1'; signal_AL <= '1'; signal_RL <= '1';	-- SRA
+				when "100100" => soutpt <= (inpt1(15 downto 0)&zero) + inpt2;				-- ADDHI
+				when "100101" => soutpt <= inpt2 - (inpt1(15 downto 0)&zero);				-- SUBHI
+				when "100110" => soutpt <= mulh(31 downto 0);								-- MULHI
+				when "100111" => soutpt <= div_result;										-- DIVHI
+				when "101000" => soutpt <= inpt1(15 downto 0)&zero and inpt2;				-- ANDHI
+				when "101001" => soutpt <= inpt1(15 downto 0)&zero or  inpt2;				-- ORHI
+				when "101010" => soutpt <= inpt1(15 downto 0)&zero nor inpt2;				-- NORHI
+				when "101011" => soutpt <= inpt1(15 downto 0)&zero xor inpt2;				-- XORHI
+				when others=> soutpt <= (others => '0');
 			end case;
 		else
-			outpt <= (others => '0');
+			soutpt <= (others => '0');
 		end if;
 	end process;
+	
+	outpt <= ShiftReg_out when(Shift_En = '1')else soutpt;
+	
 end;
 
 -- SubModule: Division --
@@ -705,3 +713,4 @@ begin
 		end if;
 	end process;
 end;
+
