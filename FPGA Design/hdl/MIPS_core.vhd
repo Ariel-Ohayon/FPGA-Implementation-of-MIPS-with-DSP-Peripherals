@@ -207,12 +207,16 @@ architecture one of MIPS_Core is
 	signal F_Read_Reg_En:	std_logic;
 	signal F_Sel:	std_logic_vector(1 downto 0);
 	signal F_Data_STG2:	std_logic_vector(31 downto 0);
+	signal pipeline_reset:	std_logic;
+	signal n_clk:	std_logic;
+	signal STG3_flag:	std_logic;
+	signal STG4_flag:	std_logic;
 	-- / Signals \ --
 
 begin
 	U1: Stage1 port map(
 			clk	=>	clk,
-			reset	=>	reset or Hazard_Pipeline_reset,
+			reset	=>	pipeline_reset,
 			ProgMode	=>	ProgMode,
 			Instruction_Data	=>	DATA_Prog,
 			Instruction_addr	=>	ADDR_Prog,
@@ -223,7 +227,7 @@ begin
 
 	U2: Stage2 port map(
 			clk	=>	clk,
-			reset	=>	reset or Hazard_Pipeline_reset,
+			reset	=>	pipeline_reset,
 			En_Pipeline	=>	EN_ID_EX,
 			Instruction	=>	stage12_Instruction,
 			Addr_Write_Reg	=>	stage25_Addr_Write_Reg,
@@ -324,10 +328,10 @@ begin
 			Reg_Write_Data_out	=>	stage25_data_in);
 
 	U6: Hazard_Unit port map(
-			clk	=>	not clk,
+			clk	=>	n_clk,
 			reset	=>	reset,
-			STG3_flag	=>	stage23_CALL or stage23_RET or stage23_BR or stage23_JMP,
-			STG4_flag	=>	stage34_CALL or stage34_RET or stage34_BR_Ex or stage34_JMP,
+			STG3_flag	=>	STG3_flag,
+			STG4_flag	=>	STG4_flag,
 			En_IF_ID	=>	EN_IF_ID,
 			En_ID_EX	=>	EN_ID_EX,
 			Pipeline_reset	=>	Hazard_Pipeline_reset);
@@ -344,6 +348,10 @@ begin
 			outpt_STG2	=>	F_Data_STG2,
 			Forward_Selector	=>	F_Sel);
 
+	pipeline_reset <= reset or Hazard_Pipeline_reset;
+	n_clk <= not clk;
+	STG3_flag <= stage23_CALL or stage23_RET or stage23_BR or stage23_JMP;
+	STG4_flag <= stage34_CALL or stage34_RET or stage34_BR_Ex or stage34_JMP;
 end;
 
 -- SubModule: Hazard_Unit --
