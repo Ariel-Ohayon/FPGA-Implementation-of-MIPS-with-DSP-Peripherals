@@ -26,7 +26,10 @@ port(
 	JMP_flag:	in	std_logic;
 	BR_JMP_Ex:	out	std_logic;
 	Mem_out_no_Pipeline:	out	std_logic_vector(31 downto 0);
-	ALU_out_no_Pipeline:	out	std_logic_vector(31 downto 0));
+	ALU_out_no_Pipeline:	out	std_logic_vector(31 downto 0);
+	En_Prog_data_MEM:	in	std_logic;
+	data_MEM_in:	in	std_logic_vector(31 downto 0);
+	addr_MEM_in:	in	std_logic_vector(7 downto 0));
 end;
 
 architecture one of Stage4 is
@@ -35,7 +38,7 @@ architecture one of Stage4 is
 	component Data_Memory
 	port(
 		clk:	in	std_logic;
-		address:	in	std_logic_vector(11 downto 0);
+		address:	in	std_logic_vector(7 downto 0);
 		data_in:	in	std_logic_vector(31 downto 0);
 		reset:	in	std_logic;
 		data_out:	out	std_logic_vector(31 downto 0);
@@ -47,7 +50,7 @@ architecture one of Stage4 is
 		in0:	in	std_logic_vector(31 downto 0);
 		in1:	in	std_logic_vector(7 downto 0);
 		selector:	in	std_logic;
-		outpt:	out	std_logic_vector(11 downto 0));
+		outpt:	out	std_logic_vector(7 downto 0));
 	end component;
 	component Trans_BR
 	port(
@@ -75,22 +78,32 @@ architecture one of Stage4 is
 		WB_Mux_sel_out:	out	std_logic;
 		Addr_Write_Reg_out:	out	std_logic_vector(4 downto 0));
 	end component;
+	component ProgMUX_Data_MEM
+	port(
+		selector:	in	std_logic;
+		inpt0_data:	in	std_logic_vector(31 downto 0);
+		inpt1_data:	in	std_logic_vector(31 downto 0);
+		outpt_data:	out	std_logic_vector(31 downto 0);
+		inpt0_addr:	in	std_logic_vector(7 downto 0);
+		inpt1_addr:	in	std_logic_vector(7 downto 0);
+		outpt_addr:	out	std_logic_vector(7 downto 0));
+	end component;
 	-- / Components \ --
 
 	-- / Signals\ --
-	signal MUX_out:	std_logic_vector(11 downto 0);
+	signal MUX_out:	std_logic_vector(7 downto 0);
 	signal Memory_out:	std_logic_vector(31 downto 0);
-	signal n_clk:		std_logic;
-	signal sflag: std_logic;
+	signal n_clk:	std_logic;
+	signal sflag:	std_logic;
+	signal data_memory_inpt:	std_logic_vector(31 downto 0);
+	signal addr_memory_inpt:	std_logic_vector(7 downto 0);
 	-- / Signals \ --
 
 begin
-	n_clk <= not clk;
-	sflag <= CALL_flag or RET_flag;
 	U1: Data_Memory port map(
 			clk	=>	n_clk,
-			address	=>	MUX_out,
-			data_in	=>	data1,
+			address	=>	addr_memory_inpt,
+			data_in	=>	data_memory_inpt,
 			reset	=>	reset,
 			data_out	=>	Memory_out,
 			En_Read	=>	Memory_Read,
@@ -126,63 +139,20 @@ begin
 			WB_Mux_sel_out	=>	WB_Mux_sel_out,
 			Addr_Write_Reg_out	=>	Addr_Write_Reg_out);
 
+	U5: ProgMUX_Data_MEM port map(
+			selector	=>	En_Prog_data_MEM,
+			inpt0_data	=>	data_MEM_in,
+			inpt1_data	=>	data1,
+			outpt_data	=>	data_memory_inpt,
+			inpt0_addr	=>	addr_MEM_in,
+			inpt1_addr	=>	MUX_out,
+			outpt_addr	=>	addr_memory_inpt);
+
 	Mem_out_no_Pipeline <= Memory_out;
 	ALU_out_no_Pipeline <= Result;
+	n_clk <= not clk;
+	sflag <= CALL_flag or RET_flag;
 end;
-
--- SubModule: Data_Memory --
-
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.std_logic_unsigned.all;
-
-entity Data_Memory is
-port(
-	clk:in	std_logic;
-	address:in	std_logic_vector(11 downto 0);
-	data_in:in	std_logic_vector(31 downto 0);
-	reset:in	std_logic;
-	data_out:out	std_logic_vector(31 downto 0);
-	En_Read:in	std_logic;
-	En_Write:in	std_logic);
-end;
-
-architecture one of Data_Memory is
-	type Memory_Block is array (0 to 255) of std_logic_vector(31 downto 0);
-	signal memory: Memory_Block;
-begin
-	process(clk,En_Read,En_Write)begin
-		data_out <= (others => 'Z');
-		if(En_Read = '1')then
-			data_out <= memory(CONV_INTEGER(address));
-		elsif(En_Write = '1')then
-			if(clk 'event and clk = '1')then
-				memory(CONV_INTEGER(address)) <= data_in;
-			end if;
-		end if;
-	end process;
-end;
-
--- SubModule: MEM_Addr_MUX --
-
-library ieee;
-use ieee.std_logic_1164.all;
-
-entity MEM_Addr_MUX is
-port(
-	in0:in	std_logic_vector(31 downto 0);
-	in1:in	std_logic_vector(7 downto 0);
-	selector:in	std_logic;
-	outpt:out	std_logic_vector(11 downto 0));
-end;
-
-architecture one of MEM_Addr_MUX is
-begin
-	outpt <= x"0"&in1 when(selector = '1') else
-			 in0(11 downto 0);
-end;
-
--- SubModule: Trans_BR --
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -207,7 +177,53 @@ begin
 	flag <= BR_Ex_in or JMP_flag or CALL_flag or RET_flag;
 end;
 
--- SubModule: MEM_WB_Pipeline_Register --
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_unsigned.all;
+
+entity Data_Memory is
+port(
+	clk:in	std_logic;
+	address:in	std_logic_vector(7	downto 0);
+	data_in:in	std_logic_vector(31 downto 0);
+	reset:in	std_logic;
+	data_out:out	std_logic_vector(31 downto 0);
+	En_Read:in	std_logic;
+	En_Write:in	std_logic);
+end;
+
+architecture one of Data_Memory is
+	type Memory_Block is array (0 to 255) of std_logic_vector(31 downto 0);
+	signal memory: Memory_Block;
+begin
+	process(clk,En_Read,En_Write)begin
+		data_out <= (others => 'Z');
+		if(En_Read = '1')then
+			data_out <= memory(CONV_INTEGER(address));
+		elsif(En_Write = '1')then
+			if(clk 'event and clk = '1')then
+				memory(CONV_INTEGER(address)) <= data_in;
+			end if;
+		end if;
+	end process;
+end;
+
+library ieee;
+use ieee.std_logic_1164.all;
+
+entity MEM_Addr_MUX is
+port(
+	in0:in	std_logic_vector(31 downto 0);
+	in1:in	std_logic_vector(7 downto 0);
+	selector:in	std_logic;
+	outpt:out	std_logic_vector(7 downto 0));
+end;
+
+architecture one of MEM_Addr_MUX is
+begin
+	outpt <= in1 when(selector = '1') else
+			 in0(7 downto 0);
+end;
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -245,5 +261,27 @@ begin
 			Addr_Write_Reg_out <= Addr_Write_Reg_in;
 		end if;
 	end process;
+end;
+
+-- SubModule: ProgMUX_Data_MEM --
+
+library ieee;
+use ieee.std_logic_1164.all;
+
+entity ProgMUX_Data_MEM is
+port(
+	selector:in	std_logic;
+	inpt0_data:in	std_logic_vector(31 downto 0);
+	inpt1_data:in	std_logic_vector(31 downto 0);
+	outpt_data:out	std_logic_vector(31 downto 0);
+	inpt0_addr:in	std_logic_vector(7 downto 0);
+	inpt1_addr:in	std_logic_vector(7 downto 0);
+	outpt_addr:out	std_logic_vector(7 downto 0));
+end;
+
+architecture one of ProgMUX_Data_MEM is
+begin
+	outpt_data <= inpt1_data when(selector='1')else inpt0_data;
+	outpt_addr <= inpt1_addr when(selector='1')else inpt0_addr;
 end;
 
