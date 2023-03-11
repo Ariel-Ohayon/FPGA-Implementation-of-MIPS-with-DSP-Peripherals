@@ -7,7 +7,8 @@ port(
 	reset:	in	std_logic;
 	ProgMode:	in	std_logic;
 	ADDR_Prog:	in	std_logic_vector(11 downto 0);
-	DATA_Prog:	in	std_logic_vector(31 downto 0));
+	DATA_Prog:	in	std_logic_vector(31 downto 0);
+	En_Prog_Data_MEM:	in	std_logic);
 end;
 
 architecture one of MIPS_Core is
@@ -116,7 +117,10 @@ architecture one of MIPS_Core is
 		JMP_flag:	in	std_logic;
 		BR_JMP_Ex:	out	std_logic;
 		Mem_out_no_Pipeline:	out	std_logic_vector(31 downto 0);
-		ALU_out_no_Pipeline:	out	std_logic_vector(31 downto 0));
+		ALU_out_no_Pipeline:	out	std_logic_vector(31 downto 0);
+		En_Prog_data_MEM:	in	std_logic;
+		data_MEM_in:	in	std_logic_vector(31 downto 0);
+		addr_MEM_in:	in	std_logic_vector(7 downto 0));
 	end component;
 	component Stage5
 	port(
@@ -313,7 +317,10 @@ begin
 			JMP_flag	=>	stage34_JMP,
 			BR_JMP_Ex	=>	stage14_PC_sel,
 			Mem_out_no_Pipeline	=>	STG4_Result_Mem,
-			ALU_out_no_Pipeline	=>	STG4_Result_ALU);
+			ALU_out_no_Pipeline	=>	STG4_Result_ALU,
+			En_Prog_data_MEM	=>	En_Prog_Data_MEM,
+			data_MEM_in	=>	DATA_Prog,
+			addr_MEM_in	=>	ADDR_Prog(7 downto 0));
 
 	U5: Stage5 port map(
 			clk	=>	clk,
@@ -353,6 +360,8 @@ begin
 	STG3_flag <= stage23_CALL or stage23_RET or stage23_BR or stage23_JMP;
 	STG4_flag <= stage34_CALL or stage34_RET or stage34_BR_Ex or stage34_JMP;
 end;
+
+
 
 -- SubModule: Hazard_Unit --
 
