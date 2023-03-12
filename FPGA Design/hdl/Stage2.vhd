@@ -27,9 +27,11 @@ port(
 	imm_out:	out	std_logic_vector(15 downto 0);
 	JMP_flag_out:	out	std_logic;
 	data_in:	in	std_logic_vector(31 downto 0);
-	F_Read_Reg_En:	out	std_logic;
 	Forward_Data_in:	in	std_logic_vector(31 downto 0);
-	Forward_Selector:	in	std_logic_vector(1 downto 0));
+	Forward_Selector:	in	std_logic_vector(1 downto 0);
+	Hazard_flag:	out	std_logic;
+	Addr_Read_Reg1:	out	std_logic_vector(4 downto 0);
+	Addr_Read_Reg2:	out	std_logic_vector(4 downto 0));
 end;
 
 architecture one of Stage2 is
@@ -248,8 +250,10 @@ begin
 			I_Type_Addr	=>	Instruction(25 downto 21),
 			outpt	=>	Addr_Reg_Write);
 
-	F_Read_Reg_En <= Reg_Read_En;
 	n_clk <= not clk;
+	Hazard_flag <= CALL_flag or RET_flag or BR_flag or JMP_flag;
+	Addr_Read_Reg1 <= Instruction(25 downto 21);
+	Addr_Read_Reg2 <= Instruction(20 downto 16);
 end;
 
 -- SubModule: Control_Unit --
