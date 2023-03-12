@@ -35,7 +35,8 @@ port(
 	data1_out:	out	std_logic_vector(31 downto 0);
 	JMP_flag_in:	in	std_logic;
 	JMP_flag_out:	out	std_logic;
-	Result_out_no_Pipeline:	out	std_logic_vector(31 downto 0));
+	Result_out_no_Pipeline:	out	std_logic_vector(31 downto 0);
+	En_Pipeline:	in	std_logic);
 end;
 
 architecture one of Stage3 is
@@ -100,7 +101,8 @@ architecture one of Stage3 is
 		SP_Data_in:	in	std_logic_vector(7 downto 0);
 		SP_Data_out:	out	std_logic_vector(7 downto 0);
 		data1_in:	in	std_logic_vector(31 downto 0);
-		data1_out:	out	std_logic_vector(31 downto 0));
+		data1_out:	out	std_logic_vector(31 downto 0);
+		En_Pipeline:	in	std_logic);
 	end component;
 	component JMP_BR_Tester
 	port(
@@ -176,7 +178,8 @@ begin
 			SP_Data_in	=>	SP_Data,
 			SP_Data_out	=>	SP_Data_out,
 			data1_in	=>	data1_in,
-			data1_out	=>	data1_out);
+			data1_out	=>	data1_out,
+			En_Pipeline	=>	En_Pipeline);
 
 	U6: JMP_BR_Tester port map(
 			BR_flag	=>	BR_flag_in,
@@ -623,7 +626,8 @@ port(
 	SP_Data_in:in	std_logic_vector(7 downto 0);
 	SP_Data_out:out	std_logic_vector(7 downto 0);
 	data1_in:in	std_logic_vector(31 downto 0);
-	data1_out:out	std_logic_vector(31 downto 0));
+	data1_out:out	std_logic_vector(31 downto 0);
+	En_Pipeline:	in	std_logic);
 end;
 
 architecture one of EX_MEM_Pipeline_Register is
@@ -644,19 +648,21 @@ begin
 			SP_Data_out			<=	(others=>'0');
 			data1_out			<=	(others=>'0');
 		elsif(clk 'event and clk = '1')then
-			Memory_Read_out		<=	Memory_Read_in;
-			Memory_Write_out	<=	Memory_Write_in;
-			Reg_Write_En_out	<=	Reg_Write_En_in;
-			WB_Mux_sel_out		<=	WB_Mux_sel_in;
-			Result_out			<=	Result_in;
-			Addr_Write_Reg_out	<=	Addr_Write_Reg_in;
-			imm_out				<=	imm_in;
-			BR_Ex_out			<=	BR_Ex_in;
-			CALL_flag_out		<=	CALL_flag_in;
-			RET_flag_out		<=	RET_flag_in;
-			JMP_flag_out		<=	JMP_flag_in;
-			SP_Data_out			<=	SP_Data_in;
-			data1_out			<=	data1_in;
+			if(En_Pipeline = '1')then
+				Memory_Read_out		<=	Memory_Read_in;
+				Memory_Write_out	<=	Memory_Write_in;
+				Reg_Write_En_out	<=	Reg_Write_En_in;
+				WB_Mux_sel_out		<=	WB_Mux_sel_in;
+				Result_out			<=	Result_in;
+				Addr_Write_Reg_out	<=	Addr_Write_Reg_in;
+				imm_out				<=	imm_in;
+				BR_Ex_out			<=	BR_Ex_in;
+				CALL_flag_out		<=	CALL_flag_in;
+				RET_flag_out		<=	RET_flag_in;
+				JMP_flag_out		<=	JMP_flag_in;
+				SP_Data_out			<=	SP_Data_in;
+				data1_out			<=	data1_in;
+			end if;
 		end if;
 	end process;
 end;
@@ -713,4 +719,3 @@ begin
 		end if;
 	end process;
 end;
-
