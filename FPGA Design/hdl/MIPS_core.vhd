@@ -380,8 +380,45 @@ port(
 end;
 
 architecture one of Hazard_Unit is
+	type state is (s0,s1,s2);
+	signal ps,ns: state;
 begin
+	process(reset,clk)begin
+		if (reset = '1')then
+			ps <= s0;
+		elsif(clk 'event and clk = '1')then
+			ps <= ns;
+		end if;
+	end process;
 
+	process(ps, STG3_flag, STG4_flag)begin
+		En_IF_ID	<= '1';
+		En_ID_EX	<= '1';
+		Pipeline_reset	<= '0';
+		case(ps)is
+			when s0 =>
+				En_IF_ID	<= '1';
+				En_ID_EX	<= '1';
+				Pipeline_reset	<= '0';
+				if(STG3_flag = '1')then
+					ns <= s1;
+				else
+					ns <= s0;
+				end if;
+			when s1 =>
+				En_IF_ID <= '0';
+				if(STG4_flag = '1')then
+					ns <= s2;
+				else
+					ns <= s1;
+				end if;
+			when s2 =>
+				En_IF_ID <= '0';
+				En_ID_EX <= '0';
+				Pipeline_reset <= '1';
+				ns <= s0;
+		end case;
+	end process;
 end;
 
 -- SubModule: Forward_Unit --
@@ -407,4 +444,3 @@ architecture one of Forward_Unit is
 begin
 
 end;
-
