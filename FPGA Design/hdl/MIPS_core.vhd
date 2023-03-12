@@ -52,9 +52,11 @@ architecture one of MIPS_Core is
 		imm_out:	out	std_logic_vector(15 downto 0);
 		JMP_flag_out:	out	std_logic;
 		data_in:	in	std_logic_vector(31 downto 0);
-		F_Read_Reg_En:	out	std_logic;
 		Forward_Data_in:	in	std_logic_vector(31 downto 0);
-		Forward_Selector:	in	std_logic_vector(1 downto 0));
+		Forward_Selector:	in	std_logic_vector(1 downto 0);
+		Hazard_flag:	out	std_logic;
+		Addr_Read_Reg1:	out	std_logic_vector(4 downto 0);
+		Addr_Read_Reg2:	out	std_logic_vector(4 downto 0));
 	end component;
 	component Stage3
 	port(
@@ -90,7 +92,8 @@ architecture one of MIPS_Core is
 		data1_out:	out	std_logic_vector(31 downto 0);
 		JMP_flag_in:	in	std_logic;
 		JMP_flag_out:	out	std_logic;
-		Result_out_no_Pipeline:	out	std_logic_vector(31 downto 0));
+		Result_out_no_Pipeline:	out	std_logic_vector(31 downto 0);
+		En_Pipeline:	in	std_logic);
 	end component;
 	component Stage4
 	port(
@@ -139,30 +142,33 @@ architecture one of MIPS_Core is
 	port(
 		clk:	in	std_logic;
 		reset:	in	std_logic;
-		STG3_flag:	in	std_logic;
-		STG4_flag:	in	std_logic;
+		STG2_flag:	in	std_logic;
 		En_IF_ID:	out	std_logic;
 		En_ID_EX:	out	std_logic;
+		En_EX_MEM:	out	std_logic;
 		Pipeline_reset:	out	std_logic);
 	end component;
 	component Forward_Unit
 	port(
-		inpt_Stage3:	in	std_logic_vector(31 downto 0);
-		inpt_Stage4_Mem:	in	std_logic_vector(31 downto 0);
-		inpt_Stage4_ALU:	in	std_logic_vector(31 downto 0);
-		En_Read_Reg:	in	std_logic;
-		Addr_Read_Reg1:	in	std_logic_vector(4 downto 0);
-		Addr_Read_Reg2:	in	std_logic_vector(4 downto 0);
-		Addr_Write_Reg_Stage3:	in	std_logic_vector(4 downto 0);
-		Addr_Write_Reg_Stage4:	in	std_logic_vector(4 downto 0);
-		outpt_STG2:	out	std_logic_vector(31 downto 0);
-		Forward_Selector:	out	std_logic_vector(1 downto 0));
+		Addr_Reg1_STG2:	in	std_logic_vector(4 downto 0);
+		Addr_Reg2_STG2:	in	std_logic_vector(4 downto 0);
+		Addr_Reg_Wr_STG3:	in	std_logic_vector(4 downto 0);
+		Addr_Reg_Wr_STG4:	in	std_logic_vector(4 downto 0);
+		selector:	out	std_logic_vector(1 downto 0);
+		data_in_STG3:	in	std_logic_vector(31 downto 0);
+		data_in_ALU_STG4:	in	std_logic_vector(31 downto 0);
+		data_in_MEM_STG4:	in	std_logic_vector(31 downto 0);
+		data_out:	out	std_logic_vector(31 downto 0);
+		WB_Sel:	in	std_logic;
+		En_IF_ID:	out	std_logic;
+		En_ID_EX:	out	std_logic;
+		En_EX_MEM:	out	std_logic);
 	end component;
 	-- / Components \ --
 
 	-- / Signals\ --
-	signal EN_IF_ID:	std_logic;
-	signal EN_ID_EX:	std_logic;
+	signal En_IF_ID:	std_logic;
+	signal En_ID_EX:	std_logic;
 	signal stage12_Instruction:	std_logic_vector(31 downto 0);
 	signal stage14_next_PC:	std_logic_vector(11 downto 0);
 	signal stage14_PC_sel:	std_logic;
@@ -197,6 +203,8 @@ architecture one of MIPS_Core is
 	signal stage34_RET:	std_logic;
 	signal stage34_SP_Data:	std_logic_vector(7 downto 0);
 	signal stage34_data1:	std_logic_vector(31 downto 0);
+	signal F_Addr_Read_Reg1:	std_logic_vector(4 downto 0);
+	signal F_Addr_Read_Reg2:	std_logic_vector(4 downto 0);
 	signal stage34_JMP:	std_logic;
 	signal stage45_Result:	std_logic_vector(31 downto 0);
 	signal stage45_Memory_Data:	std_logic_vector(31 downto 0);
@@ -208,13 +216,20 @@ architecture one of MIPS_Core is
 	signal STG3_Result:	std_logic_vector(31 downto 0);
 	signal STG4_Result_Mem:	std_logic_vector(31 downto 0);
 	signal STG4_Result_ALU:	std_logic_vector(31 downto 0);
-	signal F_Read_Reg_En:	std_logic;
 	signal F_Sel:	std_logic_vector(1 downto 0);
 	signal F_Data_STG2:	std_logic_vector(31 downto 0);
 	signal pipeline_reset:	std_logic;
 	signal n_clk:	std_logic;
 	signal STG3_flag:	std_logic;
 	signal STG4_flag:	std_logic;
+	signal En_EX_MEM:	std_logic;
+	signal Hazard_flag_STG2:	std_logic;
+	signal En_IF_ID_Forward:	std_logic;
+	signal En_ID_EX_Forward:	std_logic;
+	signal En_EX_MEM_Forward:	std_logic;
+	signal En_IF_ID_Hazard:	std_logic;
+	signal En_ID_EX_Hazard:	std_logic;
+	signal En_EX_MEM_Hazard:	std_logic;
 	-- / Signals \ --
 
 begin
@@ -224,7 +239,7 @@ begin
 			ProgMode	=>	ProgMode,
 			Instruction_Data	=>	DATA_Prog,
 			Instruction_addr	=>	ADDR_Prog,
-			En_Pipeline	=>	EN_IF_ID,
+			En_Pipeline	=>	En_IF_ID,
 			Instruction_out	=>	stage12_Instruction,
 			addr_BR_JMP	=>	stage14_next_PC,
 			PC_sel	=>	stage14_PC_sel);
@@ -232,7 +247,7 @@ begin
 	U2: Stage2 port map(
 			clk	=>	clk,
 			reset	=>	pipeline_reset,
-			En_Pipeline	=>	EN_ID_EX,
+			En_Pipeline	=>	En_ID_EX,
 			Instruction	=>	stage12_Instruction,
 			Addr_Write_Reg	=>	stage25_Addr_Write_Reg,
 			Reg_Write_En_in	=>	stage25_Reg_Write_En,
@@ -254,9 +269,11 @@ begin
 			imm_out	=>	stage23_imm,
 			JMP_flag_out	=>	stage23_JMP,
 			data_in	=>	stage25_data_in,
-			F_Read_Reg_En	=>	F_Read_Reg_En,
 			Forward_Data_in	=>	F_Data_STG2,
-			Forward_Selector	=>	F_Sel);
+			Forward_Selector	=>	F_Sel,
+			Hazard_flag	=>	Hazard_flag_STG2,
+			Addr_Read_Reg1	=>	F_Addr_Read_Reg1,
+			Addr_Read_Reg2	=>	F_Addr_Read_Reg2);
 
 	U3: Stage3 port map(
 			clk	=>	clk,
@@ -291,7 +308,8 @@ begin
 			data1_out	=>	stage34_data1,
 			JMP_flag_in	=>	stage23_JMP,
 			JMP_flag_out	=>	stage34_JMP,
-			Result_out_no_Pipeline	=>	STG3_Result);
+			Result_out_no_Pipeline	=>	STG3_Result,
+			En_Pipeline	=>	En_EX_MEM);
 
 	U4: Stage4 port map(
 			clk	=>	clk,
@@ -335,112 +353,33 @@ begin
 			Reg_Write_Data_out	=>	stage25_data_in);
 
 	U6: Hazard_Unit port map(
-			clk	=>	n_clk,
+			clk	=>	clk,
 			reset	=>	reset,
-			STG3_flag	=>	STG3_flag,
-			STG4_flag	=>	STG4_flag,
-			En_IF_ID	=>	EN_IF_ID,
-			En_ID_EX	=>	EN_ID_EX,
+			STG2_flag	=>	Hazard_flag_STG2,
+			En_IF_ID	=>	En_IF_ID_Hazard,
+			En_ID_EX	=>	En_ID_EX_Hazard,
+			En_EX_MEM	=>	En_EX_MEM_Hazard,
 			Pipeline_reset	=>	Hazard_Pipeline_reset);
 
 	U7: Forward_Unit port map(
-			inpt_Stage3	=>	STG3_Result,
-			inpt_Stage4_Mem	=>	STG4_Result_Mem,
-			inpt_Stage4_ALU	=>	STG4_Result_ALU,
-			En_Read_Reg	=>	F_Read_Reg_En,
-			Addr_Read_Reg1	=>	stage12_Instruction(25 downto 21),
-			Addr_Read_Reg2	=>	stage12_Instruction(20 downto 16),
-			Addr_Write_Reg_Stage3	=>	stage23_Addr_Write_Reg,
-			Addr_Write_Reg_Stage4	=>	stage34_Addr_Write_Reg,
-			outpt_STG2	=>	F_Data_STG2,
-			Forward_Selector	=>	F_Sel);
+			Addr_Reg1_STG2	=>	F_Addr_Read_Reg1,
+			Addr_Reg2_STG2	=>	F_Addr_Read_Reg2,
+			Addr_Reg_Wr_STG3	=>	stage23_Addr_Write_Reg,
+			Addr_Reg_Wr_STG4	=>	stage34_Addr_Write_Reg,
+			selector	=>	F_Sel,
+			data_in_STG3	=>	STG3_Result,
+			data_in_ALU_STG4	=>	STG4_Result_ALU,
+			data_in_MEM_STG4	=>	STG4_Result_Mem,
+			data_out	=>	F_Data_STG2,
+			WB_Sel	=>	stage23_WB_Mux_sel,
+			En_IF_ID	=>	En_IF_ID_Forward,
+			En_ID_EX	=>	En_ID_EX_Forward,
+			En_EX_MEM	=>	En_EX_MEM_Forward);
 
 	pipeline_reset <= reset or Hazard_Pipeline_reset;
 	n_clk <= not clk;
-	STG3_flag <= stage23_CALL or stage23_RET or stage23_BR or stage23_JMP;
-	STG4_flag <= stage34_CALL or stage34_RET or stage34_BR_Ex or stage34_JMP;
+	En_IF_ID <= En_IF_ID_Hazard and En_IF_ID_Forward;
+	En_ID_EX <= En_ID_EX_Hazard and En_ID_EX_Forward;
+	En_EX_MEM <= En_EX_MEM_Hazard and En_EX_MEM_Forward;
 end;
 
-
-
--- SubModule: Hazard_Unit --
-
-library ieee;
-use ieee.std_logic_1164.all;
-
-entity Hazard_Unit is
-port(
-	clk:in	std_logic;
-	reset:in	std_logic;
-	STG3_flag:in	std_logic;
-	STG4_flag:in	std_logic;
-	En_IF_ID:out	std_logic;
-	En_ID_EX:out	std_logic;
-	Pipeline_reset:out	std_logic);
-end;
-
-architecture one of Hazard_Unit is
-	type state is (s0,s1,s2);
-	signal ps,ns: state;
-begin
-	process(reset,clk)begin
-		if (reset = '1')then
-			ps <= s0;
-		elsif(clk 'event and clk = '1')then
-			ps <= ns;
-		end if;
-	end process;
-
-	process(ps, STG3_flag, STG4_flag)begin
-		En_IF_ID	<= '1';
-		En_ID_EX	<= '1';
-		Pipeline_reset	<= '0';
-		case(ps)is
-			when s0 =>
-				En_IF_ID	<= '1';
-				En_ID_EX	<= '1';
-				Pipeline_reset	<= '0';
-				if(STG3_flag = '1')then
-					ns <= s1;
-				else
-					ns <= s0;
-				end if;
-			when s1 =>
-				En_IF_ID <= '0';
-				if(STG4_flag = '1')then
-					ns <= s2;
-				else
-					ns <= s1;
-				end if;
-			when s2 =>
-				En_IF_ID <= '0';
-				En_ID_EX <= '0';
-				Pipeline_reset <= '1';
-				ns <= s0;
-		end case;
-	end process;
-end;
-
--- SubModule: Forward_Unit --
-
-library ieee;
-use ieee.std_logic_1164.all;
-
-entity Forward_Unit is
-port(
-	inpt_Stage3:in	std_logic_vector(31 downto 0);
-	inpt_Stage4_Mem:in	std_logic_vector(31 downto 0);
-	inpt_Stage4_ALU:in	std_logic_vector(31 downto 0);
-	En_Read_Reg:in	std_logic;
-	Addr_Read_Reg1:in	std_logic_vector(4 downto 0);
-	Addr_Read_Reg2:in	std_logic_vector(4 downto 0);
-	Addr_Write_Reg_Stage3:in	std_logic_vector(4 downto 0);
-	Addr_Write_Reg_Stage4:in	std_logic_vector(4 downto 0);
-	outpt_STG2:out	std_logic_vector(31 downto 0);
-	Forward_Selector:out	std_logic_vector(1 downto 0));
-end;
-
-architecture one of Forward_Unit is
-begin
-
-end;
