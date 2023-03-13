@@ -160,8 +160,8 @@ def I_Type_Encode(instruction_list,opcode):
     rd = int(instruction_list[1].replace('R',''))
     rt = int(instruction_list[2].replace('R',''))
     imm = int(instruction_list[3])
-    Instruction_Encode = (opcode * (2**26)) + (rd * (2**21)) + (rt * (2**16)) + (imm * (2**0))
-    print(f'instruction_list = {instruction_list} | opcode = {opcode} | rd = {rd} | rt = {rt} | imm = {imm} | Encode = {hex(Instruction_Encode)}')
+    Instruction_Encode = (opcode * (2**26)) + (rt * (2**21)) + (rd * (2**16)) + (imm * (2**0))
+    print(f'instruction_list = {instruction_list} | opcode = {opcode} | rt = {rt} | rd = {rd} | imm = {imm} | Encode = {hex(Instruction_Encode)}')
     return (Instruction_Encode)
     
 def BR_Type_Encode(instruction_list,opcode):
