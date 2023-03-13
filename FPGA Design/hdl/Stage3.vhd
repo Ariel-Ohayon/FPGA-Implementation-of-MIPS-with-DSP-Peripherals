@@ -240,6 +240,7 @@ architecture one of ALU is
 	signal signal_AL:		std_logic;
 	signal signal_RL:		std_logic;
 	signal Shift_En:		std_logic;
+	signal out_div:			std_logic;
 	signal soutpt:			std_logic_vector(31 downto 0);
 	-- / Signals \ --
 	
@@ -264,6 +265,7 @@ begin
 	
 	process(inpt1,inpt2,En,Op_Code)begin
 		
+		out_div <= '0';
 		Shift_En <= '0';
 		mul	 <= inpt1 * inpt2;
 		mulh <= (inpt1(15 downto 0)&zero) * inpt2;
@@ -275,20 +277,20 @@ begin
 			case(Op_Code)is
 				when "000100" => soutpt <= inpt1 + inpt2;									-- ADD
 				when "000101" => soutpt <= inpt2 - inpt1;									-- SUB
-				when "000110" => soutpt <= mul(31 downto 0);									-- MUL
-				when "000111" => soutpt <= div_result;										-- DIV
+				when "000110" => soutpt <= mul(31 downto 0);								-- MUL
+				when "000111" => out_div <= '1';											-- DIV
 				when "001000" => soutpt <= inpt1 and inpt2;									-- AND
 				when "001001" => soutpt <= inpt1 or  inpt2;									-- OR
 				when "001010" => soutpt <= inpt1 nor inpt2;									-- NOR
 				when "001011" => soutpt <= inpt1 xor inpt2;									-- XOR
-				when "011000" => Shift_En <= '1'; signal_AL <= '0'; signal_RL <= '0';	-- SLL
-				when "011001" => Shift_En <= '1'; signal_AL <= '0'; signal_RL <= '1';	-- SRL
-				when "011010" => Shift_En <= '1'; signal_AL <= '1'; signal_RL <= '0';	-- SLA
-				when "011011" => Shift_En <= '1'; signal_AL <= '1'; signal_RL <= '1';	-- SRA
+				when "011000" => Shift_En <= '1'; signal_AL <= '0'; signal_RL <= '0';		-- SLL
+				when "011001" => Shift_En <= '1'; signal_AL <= '0'; signal_RL <= '1';		-- SRL
+				when "011010" => Shift_En <= '1'; signal_AL <= '1'; signal_RL <= '0';		-- SLA
+				when "011011" => Shift_En <= '1'; signal_AL <= '1'; signal_RL <= '1';		-- SRA
 				when "100100" => soutpt <= (inpt1(15 downto 0)&zero) + inpt2;				-- ADDHI
 				when "100101" => soutpt <= inpt2 - (inpt1(15 downto 0)&zero);				-- SUBHI
 				when "100110" => soutpt <= mulh(31 downto 0);								-- MULHI
-				when "100111" => soutpt <= div_result;										-- DIVHI
+				when "100111" => out_div <= '1';											-- DIVHI
 				when "101000" => soutpt <= inpt1(15 downto 0)&zero and inpt2;				-- ANDHI
 				when "101001" => soutpt <= inpt1(15 downto 0)&zero or  inpt2;				-- ORHI
 				when "101010" => soutpt <= inpt1(15 downto 0)&zero nor inpt2;				-- NORHI
@@ -300,7 +302,7 @@ begin
 		end if;
 	end process;
 	
-	outpt <= ShiftReg_out when(Shift_En = '1')else soutpt;
+	outpt <= ShiftReg_out when(Shift_En = '1')else div_result when(out_div = '1')else soutpt;
 	
 end;
 
@@ -719,3 +721,5 @@ begin
 		end if;
 	end process;
 end;
+
+
