@@ -136,7 +136,7 @@ def main():
                     # -- BUS - Type Instructions -- #
                     
                     # -- Print Encod to output file -- #
-                    WriteFile.write(f'{instruction_number}:{hex(Instruction_Encode)}\n')
+                    WriteFile.write(f'{instruction_number}:{hex(Instruction_Encode)}|{Instruction_Encode}\n')
                     instruction_number += 1
                     # -- Print Encod to output file -- #
                     
