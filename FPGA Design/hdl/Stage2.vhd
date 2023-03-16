@@ -247,7 +247,7 @@ begin
 	U7: Reg_Addr_MUX port map(
 			selector	=>	Addr_MUX_sel,
 			R_Type_addr	=>	Instruction(15 downto 11),
-			I_Type_Addr	=>	Instruction(25 downto 21),
+			I_Type_Addr	=>	Instruction(20 downto 16),
 			outpt	=>	Addr_Reg_Write);
 
 	n_clk <= not clk;
