@@ -7,11 +7,14 @@ port(
 	reset:	in	std_logic;
 	ProgMode:	in	std_logic;
 	Instruction_Data:	in	std_logic_vector(31 downto 0);
-	Instruction_addr:	in	std_logic_vector(11 downto 0);
+	Instruction_addr:	in	std_logic_vector(7 downto 0);
 	En_Pipeline:	in	std_logic;
 	Instruction_out:	out	std_logic_vector(31 downto 0);
-	addr_BR_JMP:	in	std_logic_vector(11 downto 0);
-	PC_sel:	in	std_logic);
+	addr_BR_JMP:	in	std_logic_vector(7 downto 0);
+	PC_sel:	in	std_logic;
+	I_mem_Read_Debug:	in	std_logic;
+	Addr_Read:	in	std_logic_vector(7 downto 0);
+	Memory_Data_out:	out	std_logic_vector(31 downto 0));
 end;
 
 architecture one of Stage1 is
@@ -21,19 +24,19 @@ architecture one of Stage1 is
 	port(
 		reset:	in	std_logic;
 		En:	in	std_logic;
-		inpt:	in	std_logic_vector(11 downto 0);
-		outpt:	out	std_logic_vector(11 downto 0));
+		inpt:	in	std_logic_vector(7 downto 0);
+		outpt:	out	std_logic_vector(7 downto 0));
 	end component;
 	component PC_MUX
 	port(
-		addr_BR_JMP:	in	std_logic_vector(11 downto 0);
-		addr_next:	in	std_logic_vector(11 downto 0);
+		addr_BR_JMP:	in	std_logic_vector(7 downto 0);
+		addr_next:	in	std_logic_vector(7 downto 0);
 		selector:	in	std_logic;
-		outpt:	out	std_logic_vector(11 downto 0));
+		outpt:	out	std_logic_vector(7 downto 0));
 	end component;
 	component Instruction_Memory
 	port(
-		address:	in	std_logic_vector(11 downto 0);
+		address:	in	std_logic_vector(7 downto 0);
 		clk:	in	std_logic;
 		data_in:	in	std_logic_vector(31 downto 0);
 		data_out:	out	std_logic_vector(31 downto 0);
@@ -47,30 +50,32 @@ architecture one of Stage1 is
 		Instruction_in:	in	std_logic_vector(31 downto 0);
 		Instruction_out:	out	std_logic_vector(31 downto 0);
 		En:	in	std_logic;
-		PC_Adder_in:	in	std_logic_vector(11 downto 0);
-		PC_Adder_out:	out	std_logic_vector(11 downto 0));
+		PC_Adder_in:	in	std_logic_vector(7 downto 0);
+		PC_Adder_out:	out	std_logic_vector(7 downto 0));
 	end component;
 	component PC_Adder
 	port(
-		inpt:	in	std_logic_vector(11 downto 0);
-		outpt:	out	std_logic_vector(11 downto 0));
+		inpt:	in	std_logic_vector(7 downto 0);
+		outpt:	out	std_logic_vector(7 downto 0));
 	end component;
 	component Instruction_Memory_MUX
 	port(
-		in0:	in	std_logic_vector(11 downto 0);
-		in1:	in	std_logic_vector(11 downto 0);
-		selector:	in	std_logic;
-		outpt:	out	std_logic_vector(11 downto 0));
+		Addr_Write:	in	std_logic_vector(7 downto 0);
+		PC_Addr:	in	std_logic_vector(7 downto 0);
+		Addr_Read:	in	std_logic_vector(7 downto 0);
+		Read_Debug:	in	std_logic;
+		ProgMode:	in	std_logic;
+		outpt:	out	std_logic_vector(7 downto 0));
 	end component;
 	-- / Components \ --
 
 	-- / Signals\ --
-	signal PC_in:	std_logic_vector(11 downto 0);
-	signal PC_out:	std_logic_vector(11 downto 0);
-	signal PC_Adder_out:	std_logic_vector(11 downto 0);
-	signal Addr_inpt:	std_logic_vector(11 downto 0);
+	signal PC_in:	std_logic_vector(7 downto 0);
+	signal PC_out:	std_logic_vector(7 downto 0);
+	signal PC_Adder_out:	std_logic_vector(7 downto 0);
+	signal Addr_inpt:	std_logic_vector(7 downto 0);
 	signal Instruction:	std_logic_vector(31 downto 0);
-	signal PC_next:	std_logic_vector(11 downto 0);
+	signal PC_next:	std_logic_vector(7 downto 0);
 	signal n_clk:	std_logic;
 	signal En_Stage1:	std_logic;
 	-- / Signals \ --
@@ -110,13 +115,16 @@ begin
 			outpt	=>	PC_Adder_out);
 
 	U6: Instruction_Memory_MUX port map(
-			in0	=>	Instruction_addr,
-			in1	=>	PC_out,
-			selector	=>	ProgMode,
+			Addr_Write	=>	Instruction_addr,
+			PC_Addr	=>	PC_out,
+			Addr_Read	=>	Addr_Read,
+			Read_Debug	=>	I_mem_Read_Debug,
+			ProgMode	=>	ProgMode,
 			outpt	=>	Addr_inpt);
 
 	n_clk <= not clk;
 	En_Stage1 <= En_Pipeline and ProgMode;
+	Memory_Data_out <= Instruction;
 end;
 
 -- SubModule: PC_Register --
@@ -128,8 +136,8 @@ entity PC_Register is
 port(
 	reset:in	std_logic;
 	En:in	std_logic;
-	inpt:in	std_logic_vector(11 downto 0);
-	outpt:out	std_logic_vector(11 downto 0));
+	inpt:in	std_logic_vector(7 downto 0);
+	outpt:out	std_logic_vector(7 downto 0));
 end;
 
 architecture one of PC_Register is
@@ -152,10 +160,10 @@ use ieee.std_logic_1164.all;
 
 entity PC_MUX is
 port(
-	addr_BR_JMP:in	std_logic_vector(11 downto 0);
-	addr_next:in	std_logic_vector(11 downto 0);
+	addr_BR_JMP:in	std_logic_vector(7 downto 0);
+	addr_next:in	std_logic_vector(7 downto 0);
 	selector:in	std_logic;
-	outpt:out	std_logic_vector(11 downto 0));
+	outpt:out	std_logic_vector(7 downto 0));
 end;
 
 architecture one of PC_MUX is
@@ -172,7 +180,7 @@ use ieee.std_logic_unsigned.all;
 
 entity Instruction_Memory is
 port(
-	address:in	std_logic_vector(11 downto 0);
+	address:in	std_logic_vector(7 downto 0);
 	clk:in	std_logic;
 	data_in:in	std_logic_vector(31 downto 0);
 	data_out:out	std_logic_vector(31 downto 0);
@@ -206,8 +214,8 @@ port(
 	Instruction_in:in	std_logic_vector(31 downto 0);
 	Instruction_out:out	std_logic_vector(31 downto 0);
 	En:in	std_logic;
-	PC_Adder_in:in	std_logic_vector(11 downto 0);
-	PC_Adder_out:out	std_logic_vector(11 downto 0));
+	PC_Adder_in:in	std_logic_vector(7 downto 0);
+	PC_Adder_out:out	std_logic_vector(7 downto 0));
 end;
 
 architecture one of IF_ID_Pipeline_Register is
@@ -232,8 +240,8 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 entity PC_Adder is
 port(
-	inpt:in	std_logic_vector(11 downto 0);
-	outpt:out	std_logic_vector(11 downto 0));
+	inpt:in	std_logic_vector(7 downto 0);
+	outpt:out	std_logic_vector(7 downto 0));
 end;
 
 architecture one of PC_Adder is
@@ -248,14 +256,17 @@ use ieee.std_logic_1164.all;
 
 entity Instruction_Memory_MUX is
 port(
-	in0:in	std_logic_vector(11 downto 0);
-	in1:in	std_logic_vector(11 downto 0);
-	selector:in	std_logic;
-	outpt:out	std_logic_vector(11 downto 0));
+	Addr_Write:	in	std_logic_vector(7 downto 0);
+	PC_Addr:	in	std_logic_vector(7 downto 0);
+	Addr_Read:	in	std_logic_vector(7 downto 0);
+	ProgMode:	in	std_logic;
+	Read_Debug:	in	std_logic;
+	outpt:		out	std_logic_vector(7 downto 0));
 end;
 
 architecture one of Instruction_Memory_MUX is
 begin
-	outpt <= in1 when (selector='1') else
-			 in0;
+	outpt <= Addr_Read when(Read_Debug = '1')else
+			 PC_Addr when(ProgMode = '1') else
+			 Addr_Write;
 end;
