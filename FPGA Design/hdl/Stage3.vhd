@@ -36,7 +36,8 @@ port(
 	JMP_flag_in:	in	std_logic;
 	JMP_flag_out:	out	std_logic;
 	Result_out_no_Pipeline:	out	std_logic_vector(31 downto 0);
-	En_Pipeline:	in	std_logic);
+	En_Pipeline:	in	std_logic;
+	F_Addr_Write_Reg:	out	std_logic_vector(4 downto 0));
 end;
 
 architecture one of Stage3 is
@@ -190,6 +191,7 @@ begin
 
 	Result_out_no_Pipeline <= Result;
 	En_Op <= En_Integer & En_Float;
+	F_Addr_Write_Reg <= Addr_Write_Reg_in;
 end;
 
 -- SubModule: ALU --
