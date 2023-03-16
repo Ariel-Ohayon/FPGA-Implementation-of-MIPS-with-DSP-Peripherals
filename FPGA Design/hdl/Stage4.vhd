@@ -17,7 +17,7 @@ port(
 	Addr_Write_Reg_in:	in	std_logic_vector(4 downto 0);
 	imm:	in	std_logic_vector(15 downto 0);
 	BR_Ex:	in	std_logic;
-	next_PC:	out	std_logic_vector(11 downto 0);
+	next_PC:	out	std_logic_vector(7 downto 0);
 	Memory_Data:	out	std_logic_vector(31 downto 0);
 	Result_out:	out	std_logic_vector(31 downto 0);
 	Reg_Write_En_out:	out	std_logic;
@@ -61,7 +61,7 @@ architecture one of Stage4 is
 		imm:	in	std_logic_vector(15 downto 0);
 		StackMemory_in:	in	std_logic_vector(15 downto 0);
 		flag:	out	std_logic;
-		next_PC:	out	std_logic_vector(11 downto 0));
+		next_PC:	out	std_logic_vector(7 downto 0));
 	end component;
 	component MEM_WB_Pipeline_Register
 	port(
@@ -166,13 +166,13 @@ port(
 	imm:in	std_logic_vector(15 downto 0);
 	StackMemory_in:in	std_logic_vector(15 downto 0);
 	flag:out	std_logic;
-	next_PC:out	std_logic_vector(11 downto 0));
+	next_PC:out	std_logic_vector(7 downto 0));
 end;
 
 architecture one of Trans_BR is
 begin
-	next_PC <= imm(11 downto 0)when((BR_Ex_in or JMP_flag or CALL_flag) = '1')else
-			   StackMemory_in(11 downto 0) when(RET_flag = '1')else
+	next_PC <= imm(7 downto 0)when((BR_Ex_in or JMP_flag or CALL_flag) = '1')else
+			   StackMemory_in(7 downto 0) when(RET_flag = '1')else
 			   (others => '0');
 	flag <= BR_Ex_in or JMP_flag or CALL_flag or RET_flag;
 end;
