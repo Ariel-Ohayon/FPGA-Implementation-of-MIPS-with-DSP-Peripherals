@@ -10,7 +10,9 @@ port(
 	DATA_Prog:	in	std_logic_vector(31 downto 0);
 	En_Prog_Data_MEM:	in	std_logic;
 	I_MEM_Read_Debug:	in	std_logic;
-	Addr_Read_Debug:	in	std_logic_vector(7 downto 0));
+	Addr_Read_Debug:	in	std_logic_vector(7 downto 0);
+	Debug_S1_Instruction_Data:	out	std_logic_vector(31 downto 0);
+	Debug_S1_PC_Addr:	out	std_logic_vector(7 downto 0));
 end;
 
 architecture one of MIPS_Core is
@@ -28,7 +30,9 @@ architecture one of MIPS_Core is
 		addr_BR_JMP:	in	std_logic_vector(7 downto 0);
 		PC_sel:	in	std_logic;
 		I_mem_Read_Debug:	in	std_logic;
-		Addr_Read:	in	std_logic_vector(7 downto 0));
+		Addr_Read:	in	std_logic_vector(7 downto 0);
+		Memory_Data_out:	out	std_logic_vector(31 downto 0);
+		PC_Addr_out:	out	std_logic_vector(7 downto 0));
 	end component;
 	component Stage2
 	port(
@@ -97,8 +101,7 @@ architecture one of MIPS_Core is
 		JMP_flag_in:	in	std_logic;
 		JMP_flag_out:	out	std_logic;
 		Result_out_no_Pipeline:	out	std_logic_vector(31 downto 0);
-		En_Pipeline:	in	std_logic;
-		F_Addr_Write_Reg:	out	std_logic_vector(4 downto 0));
+		En_Pipeline:	in	std_logic);
 	end component;
 	component Stage4
 	port(
@@ -157,9 +160,9 @@ architecture one of MIPS_Core is
 	port(
 		clk:	in	std_logic;
 		reset:	in	std_logic;
-		Addr_Reg1_STG2:in	std_logic_vector(4 downto 0);
-		Addr_Reg2_STG2:in	std_logic_vector(4 downto 0);
-		Addr_Reg_Wr_STG3:in	std_logic_vector(4 downto 0);
+		Addr_Reg1_STG2:	in	std_logic_vector(4 downto 0);
+		Addr_Reg2_STG2:	in	std_logic_vector(4 downto 0);
+		Addr_Reg_Wr_STG3:	in	std_logic_vector(4 downto 0);
 		En_IF_ID:	out	std_logic;
 		En_ID_EX:	out	std_logic;
 		En_EX_MEM:	out	std_logic);
@@ -230,7 +233,6 @@ architecture one of MIPS_Core is
 	signal En_IF_ID_Hazard:	std_logic;
 	signal En_ID_EX_Hazard:	std_logic;
 	signal En_EX_MEM_Hazard:	std_logic;
-	signal F_Addr_Write_Reg_STG3:	std_logic_vector(4 downto 0);
 	-- / Signals \ --
 
 begin
@@ -245,7 +247,9 @@ begin
 			addr_BR_JMP	=>	stage14_next_PC,
 			PC_sel	=>	stage14_PC_sel,
 			I_mem_Read_Debug	=>	I_MEM_Read_Debug,
-			Addr_Read	=>	Addr_Read_Debug);
+			Addr_Read	=>	Addr_Read_Debug,
+			Memory_Data_out	=>	Debug_S1_Instruction_Data,
+			PC_Addr_out	=>	Debug_S1_PC_Addr);
 
 	U2: Stage2 port map(
 			clk	=>	clk,
@@ -312,8 +316,7 @@ begin
 			JMP_flag_in	=>	stage23_JMP,
 			JMP_flag_out	=>	stage34_JMP,
 			Result_out_no_Pipeline	=>	STG3_Result,
-			En_Pipeline	=>	En_EX_MEM,
-			F_Addr_Write_Reg	=>	F_Addr_Write_Reg_STG3);
+			En_Pipeline	=>	En_EX_MEM);
 
 	U4: Stage4 port map(
 			clk	=>	clk,
@@ -366,14 +369,14 @@ begin
 			Pipeline_reset	=>	Hazard_Pipeline_reset);
 
 	U7: Forward_Unit port map(
-			clk					=> clk,
-			reset					=>	reset,
-			Addr_Reg1_STG2		=>	F_Addr_Read_Reg1,
-			Addr_Reg2_STG2		=>	F_Addr_Read_Reg2,
-			Addr_Reg_Wr_STG3	=>	F_Addr_Write_Reg_STG3,
-			En_IF_ID				=>	En_IF_ID_Forward,
-			En_ID_EX				=>	En_ID_EX_Forward,
-			En_EX_MEM			=>	En_EX_MEM_Forward);
+			clk	=>	clk,
+			reset	=>	reset,
+			Addr_Reg1_STG2	=>	F_Addr_Read_Reg1,
+			Addr_Reg2_STG2	=>	F_Addr_Read_Reg2,
+			Addr_Reg_Wr_STG3	=>	stage23_Addr_Write_Reg,
+			En_IF_ID	=>	En_IF_ID_Forward,
+			En_ID_EX	=>	En_ID_EX_Forward,
+			En_EX_MEM	=>	En_EX_MEM_Forward);
 
 	pipeline_reset <= reset or Hazard_Pipeline_reset;
 	n_clk <= not clk;
