@@ -59,15 +59,16 @@ class GUI(QMainWindow):
         
         #   send En to IM (Instruction Memory) - it will enable the programming function
         print('Enabling the Instruction Memory:')
-        port.write(b'I')
-        port.write(b'M')
-        port.write(b'E')
-        port.write(b'n')
+        port.write(b'I')    #   0x49
+        port.write(b'M')    #   0x4d
+        port.write(b'E')    #   0x45
+        port.write(b'n')    #   0x6e
         
         print(b'I')
         print(b'M')
         print(b'E')
         print(b'n')
+        time.sleep(5)
         
         print('Program Memory Enabled for burn software')
         
@@ -94,15 +95,16 @@ class GUI(QMainWindow):
             
             # write address to the core
             print('write the address of the current cell in instruction memory')
-            port.write(bytes(num_address))
+            port.write(num_address.to_bytes(1,'big'))
             port.write(b'0')
             port.write(b'0')
             port.write(b'0')
             
-            print(bytes(num_address))
+            print(num_address.to_bytes(1,'big'))
             print(b'0')
             print(b'0')
             print(b'0')
+            time.sleep(5)
             
             mask_byte0 = 0x000000FF
             mask_byte1 = 0x0000FF00
@@ -116,15 +118,16 @@ class GUI(QMainWindow):
             
             # write data to the core
             print('Write the data to prog the cell')
-            port.write(bytes(byte0))
-            port.write(bytes(byte1))
-            port.write(bytes(byte2))
-            port.write(bytes(byte3))
+            port.write(byte0.to_bytes(1,'big'))
+            port.write(byte1.to_bytes(1,'big'))
+            port.write(byte2.to_bytes(1,'big'))
+            port.write(byte3.to_bytes(1,'big'))
             
-            print(bytes(byte0))
-            print(bytes(byte1))
-            print(bytes(byte2))
-            print(bytes(byte3))
+            print(byte0.to_bytes(1,'big'))
+            print(byte1.to_bytes(1,'big'))
+            print(byte2.to_bytes(1,'big'))
+            print(byte3.to_bytes(1,'big'))
+            time.sleep(5)
             
             # clk pulse:
             print('Send Pulse')
@@ -132,11 +135,12 @@ class GUI(QMainWindow):
             port.write(b'c')    # 0x63 = 01100011
             port.write(b'l')    # 0x6C = 01101100
             port.write(b'k')    # 0x6B = 01101011
-            time.sleep(0.2)
+            
             port.write(b'0')    # c - cmd (command)
             port.write(b'0')    # send clk (clock)
             port.write(b'0')
             port.write(b'0')
+            time.sleep(5)
             
         # Exit from programming mode (Disable the progmode)
         port.write(b'I')
@@ -148,6 +152,7 @@ class GUI(QMainWindow):
         print(b'M')
         print(b'E')
         print(b'n')
+        time.sleep(5)
         
         print('Finish program the Instruction Memory.')
 
