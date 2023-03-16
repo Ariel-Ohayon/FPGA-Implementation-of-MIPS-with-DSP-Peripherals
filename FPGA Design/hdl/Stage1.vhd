@@ -14,7 +14,8 @@ port(
 	PC_sel:	in	std_logic;
 	I_mem_Read_Debug:	in	std_logic;
 	Addr_Read:	in	std_logic_vector(7 downto 0);
-	Memory_Data_out:	out	std_logic_vector(31 downto 0));
+	Memory_Data_out:	out	std_logic_vector(31 downto 0);
+	PC_Addr_out:	out	std_logic_vector(7 downto 0));
 end;
 
 architecture one of Stage1 is
@@ -125,6 +126,7 @@ begin
 	n_clk <= not clk;
 	En_Stage1 <= En_Pipeline and ProgMode;
 	Memory_Data_out <= Instruction;
+	PC_Addr_out <= PC_out;
 end;
 
 -- SubModule: PC_Register --
