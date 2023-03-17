@@ -7,14 +7,20 @@ port(
 	clk:		in		std_logic;
 	serial_in:	in		std_logic; -- RX
 	serial_out:	out	std_logic; -- TX
---	recv_flag:	out	std_logic;
---	sel:			in		std_logic_vector(1 downto 0);
---	byte_out:	out	std_logic_vector(7 downto 0);
-	clkout:		out	std_logic);
+	clkout:		out	std_logic;
+	resetout:	out	std_logic;
+	ProgMode:	out	std_logic;
+	Addr_out:	out	std_logic_vector(7 downto 0);
+	Data_out:	out	std_logic_vector(31 downto 0);
+	I_MEM_Read_Debug:	out	std_logic;
+	Addr_Read_Debug:	out	std_logic_vector(7 downto 0);
+	Debug_S1_Instruction_Data:	in std_logic_vector(31 downto 0);
+	Debug_S1_PC_Addr:	in	std_logic_vector(7 downto 0));
 end;
 
 architecture one of Debugger is
-
+	
+	-- / Components \ --
 	component UART
 	port(
 		rst,clk: in std_logic;							-- 50[MHz] clk Signal
@@ -41,17 +47,30 @@ architecture one of Debugger is
 	
 	component Debugger_Decoder
 	port(
-		byte0:	in	std_logic_vector(7 downto 0);
-		byte1:	in	std_logic_vector(7 downto 0);
-		byte2:	in	std_logic_vector(7 downto 0);
-		byte3:	in	std_logic_vector(7 downto 0);
-		En:		in	std_logic;
-	
-		-- Generator --
-		reset:		in	std_logic;
-		clkout:	out	std_logic);
+		byte0:	in		std_logic_vector(7 downto 0);
+		byte1:	in		std_logic_vector(7 downto 0);
+		byte2:	in		std_logic_vector(7 downto 0);
+		byte3:	in		std_logic_vector(7 downto 0);
+		En:		in		std_logic;
+		reset:	in		std_logic;
+		
+		CPU_reset:	out	std_logic;
+		clkout:	out	std_logic;
+		ProgMode:	out	std_logic);
 	end component;
 	
+	component Instruction_Memory_Decoder
+	port(
+		reset:		in		std_logic;
+		clk:			in		std_logic;
+		Data_in:		in		std_logic_vector(31 downto 0);
+		ProgMode:	in		std_logic;
+		Addr_out:	out	std_logic_vector(7 downto 0);
+		Data_out:	out	std_logic_vector(31 downto 0));
+	end component;
+	-- / Components \ --
+	
+	-- / Signals \ --
 	signal srecv_flag:	std_logic;
 	
 	signal Trigger_pulse:	std_logic;
@@ -64,6 +83,7 @@ architecture one of Debugger is
 	signal byte1:	std_logic_vector(7 downto 0);
 	signal byte2:	std_logic_vector(7 downto 0);
 	signal byte3:	std_logic_vector(7 downto 0);
+	signal Data_Packet:	std_logic_vector(31 downto 0);
 	
 	signal clk_packet:	std_logic;
 	signal s1clk_packet:	std_logic;
@@ -72,6 +92,8 @@ architecture one of Debugger is
 	signal sclkout:	std_logic;
 	
 	signal n_reset:std_logic;
+	signal sProgMode:	std_logic;
+	-- / Signals \ --
 	
 begin
 	n_reset <= not reset;
@@ -87,14 +109,14 @@ begin
 		Data_Receive	=>	UART_module_parallel_out);
 		
 	U2:	Four_Packet_UART port map(
-		reset				=>	n_reset,
-		inpt				=>	srecv_flag,
-		En					=>	En_Packet,
-		parallel_in 		=> UART_module_parallel_out,
-		byte0_out			=>	byte0,
-		byte1_out			=>	byte1,
-		byte2_out			=>	byte2,
-		byte3_out			=>	byte3);
+		reset			=>	n_reset,
+		inpt			=>	srecv_flag,
+		En				=>	En_Packet,
+		parallel_in => UART_module_parallel_out,
+		byte0_out	=>	byte0,
+		byte1_out	=>	byte1,
+		byte2_out	=>	byte2,
+		byte3_out	=>	byte3);
 	
 	process(reset,clk)begin
 		if(reset = '0')then
@@ -107,14 +129,26 @@ begin
 	end process;
 	clk_packet <= s1clk_packet and (not s2clk_packet);
 	
+	Data_Packet <= byte3&byte2&byte1&byte0;
+	
 	U3: Debugger_Decoder port map(
-		byte0	=>	byte0,
-		byte1	=>	byte1,
-		byte2	=>	byte2,
-		byte3	=>	byte3,
-		En		=>	clk_packet,
-		reset	=>	n_reset,
-		clkout	=>	clkout);
+		byte0		=>	byte0,
+		byte1		=>	byte1,
+		byte2		=>	byte2,
+		byte3		=>	byte3,
+		En			=>	clk_packet,
+		reset		=>	n_reset,
+		CPU_reset	=>	resetout,
+		clkout		=>	clkout,
+		ProgMode	=>	sProgMode);
+		
+	U4:	Instruction_Memory_Decoder port map(
+		reset		=>	n_reset,
+		clk		=>	clk_packet,
+		Data_in	=>	Data_Packet,
+		ProgMode	=>	sProgMode,
+		Addr_out	=>	Addr_out,
+		Data_out	=>	Data_out);
 	
 	-- process(reset,clk_packet)begin
 		-- if(reset = '0')then
@@ -128,6 +162,7 @@ begin
 			-- end case;
 		-- end if;
 	-- end process;
+	ProgMode <= sProgMode;
 end;
 
 
@@ -208,14 +243,15 @@ port(
 	byte2:	in		std_logic_vector(7 downto 0);
 	byte3:	in		std_logic_vector(7 downto 0);
 	En:		in		std_logic;
-	
-	-- Generator --
 	reset:	in		std_logic;
-	clkout:	out	std_logic);
+	clkout:	out	std_logic;
+	CPU_reset:	out	std_logic;
+	ProgMode:	out	std_logic);
 end;
 
 architecture one of Debugger_Decoder is
-	signal data:	std_logic_vector(31 downto 0);
+	signal data:		std_logic_vector(31 downto 0);
+	signal sProgMode:	std_logic;
 begin
 	
 	data <= byte3 & byte2 & byte1 & byte0;
@@ -223,11 +259,65 @@ begin
 	process(reset,En)begin
 		if(reset = '1')then
 			clkout <= '0';
+			sProgMode <= '1';
+			CPU_reset <= '1';
 		elsif(En 'event and En = '1')then
-			if(data = x"6B6C6363")then
+			if(data = x"6B6C6363")then	-- recv: "klcc" (cclk)
 				clkout <= '1';
-			else
+			elsif(data = x"6E454D49")then
+				sProgMode <= not sProgMode;
+			elsif(data = x"31545352")then		-- recv: "1TSR" (RST1)
+				CPU_reset <= '1';
+			elsif(data = x"30545352")then		-- recv: "0TSR" (RST0)
+				CPU_reset <= '0';
+			elsif(data = x"30303030")then
 				clkout <= '0';
+			end if;
+		end if;
+	end process;
+	ProgMode <= sProgMode;
+end;
+
+-- SubModule: Instruction_Memory_Decoder --
+library ieee;
+use ieee.std_logic_1164.all;
+
+entity Instruction_Memory_Decoder is
+port(
+	reset:		in		std_logic;
+	clk:			in		std_logic;
+	Data_in:		in		std_logic_vector(31 downto 0);
+	ProgMode:	in		std_logic;
+	Addr_out:	out	std_logic_vector(7 downto 0);
+	Data_out:	out	std_logic_vector(31 downto 0));
+end;
+
+architecture one of Instruction_Memory_Decoder is
+	signal state:	std_logic := '0';
+begin
+	process(reset,clk)begin
+		if(reset = '1')then
+			state <= '0';
+			Addr_out <= (others=>'0');
+			Data_out <= (others=>'0');
+		elsif(clk 'event and clk = '1')then
+			if(ProgMode = '0')then
+				if(Data_in = x"6E454D49")then
+					Addr_out <= (others=>'0');
+					Data_out <= (others=>'0');
+				elsif(Data_in = x"6B6C6363" nor Data_in = x"30303030")then
+					if(state = '0')then
+						Addr_out <= Data_in(7 downto 0);
+						state <= not state;
+					else
+						Data_out <= Data_in;
+						state <= not state;
+					end if;
+				end if;
+			else	-- ProgMode = '1'
+				Addr_out <= (others => '0');
+				Data_out <= (others => '0');
+				state <= '0';
 			end if;
 		end if;
 	end process;
