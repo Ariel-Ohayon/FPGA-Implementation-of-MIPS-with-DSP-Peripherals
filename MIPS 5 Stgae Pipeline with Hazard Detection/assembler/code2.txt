@@ -1,0 +1,6 @@
+.start
+	ADDI	R1,R0,5
+	ADDI	R2,R0,3
+	ADD		R0,R0,R0
+	SUB		R4,R1,R2
+	ADD		R1,R1,R2
