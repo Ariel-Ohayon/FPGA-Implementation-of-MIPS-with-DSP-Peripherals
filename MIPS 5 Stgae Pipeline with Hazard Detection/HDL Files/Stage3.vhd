@@ -202,6 +202,8 @@ begin
 		
 		if(En = '1')then
 			case(Op_Code)is
+				when "000001" => soutpt <= inpt1 + inpt2;
+				when "000010" => soutpt <= inpt1 + inpt2;
 				when "000100" => soutpt <= inpt1 + inpt2;									-- ADD
 				when "000101" => soutpt <= inpt1 - inpt2;									-- SUB
 				when "000110" => mul_sel <= '1';											-- MUL
