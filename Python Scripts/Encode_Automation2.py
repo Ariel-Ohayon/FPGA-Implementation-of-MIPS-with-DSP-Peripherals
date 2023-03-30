@@ -1,6 +1,10 @@
+import os
 def main():
     
-    filename = input('Enter file name: ')
+    print('The files in the directory:')
+    os.system('dir/b')
+    
+    filename = input('Choose file to convert to machine language: ')
     
     ReadFile = open(filename,'r')
     WriteFile = open('output file.txt', 'w')
@@ -16,17 +20,23 @@ def main():
         
         if(line == '.start'):
             Encode = 1
+            print('Start Encoding the instructions')
+            WriteFile.write('I:\n')#I = Instructions (Program into the Instruction Memory)
         elif(line == '.data'):
             Encode = 2
-        
+            print('Start Encoding the data')
+            WriteFile.write('D:\n')#D = Data (Program into the Data Memory)
         else:
             if(Encode == 1):    # Instruction Encode
-                if(line != ''):
-                    line = line.replace(',',' ').replace('(',' ').replace(')',' ')
-                    instruction_list = line.split()
+                line = line.replace(',',' ').replace('(',' ').replace(')',' ')
+                instruction_list = line.split()
+                if(not(instruction_list == [])):
                     
+                    if(instruction_list[0] == 'NOP'):
+                        Instruction_Encode = 4 # ADD R0,R0,R0
+                        print(f'Instruction_list = {instruction_list}')
                     # -- R - Type Instructions -- #
-                    if(instruction_list[0] == 'ADD'):
+                    elif(instruction_list[0] == 'ADD'):
                         Instruction_Encode = R_Type_Encode(instruction_list,function = 4)
                     elif(instruction_list[0] == 'SUB'):
                         Instruction_Encode = R_Type_Encode(instruction_list,function = 5)
@@ -136,14 +146,23 @@ def main():
                     # -- BUS - Type Instructions -- #
                     
                     # -- Print Encod to output file -- #
-                    WriteFile.write(f'{instruction_number}:{hex(Instruction_Encode)}|{Instruction_Encode}\n')
+                    WriteFile.write(f'{instruction_number}:{hex(Instruction_Encode)}|{Instruction_Encode}| - / {line} \ -\n')
                     instruction_number += 1
                     # -- Print Encod to output file -- #
-                    
-                    
+            elif(Encode == 2):
+                line = line.replace(':',' ')
+                Mdata = line.split()
+                if(not (Mdata == [])):
+                    print(Mdata)
+                    addr = Mdata[0]
+                    data = int(Mdata[1])
+                    WriteFile.write(f'{addr}:{hex(data)}|{data}\n')
+                
                 
     ReadFile.close()
     WriteFile.close()
+    print('Output file generated.')
+    input('Press enter to exit')
     
 def R_Type_Encode(instruction_list,function):
     opcode = 0
@@ -151,39 +170,43 @@ def R_Type_Encode(instruction_list,function):
     rd = int(instruction_list[1].replace('R',''))
     rs = int(instruction_list[2].replace('R',''))
     rt = int(instruction_list[3].replace('R',''))
-    Instruction_Encode = (opcode * (2**26)) + (rs * (2**21)) + (rt * (2**16)) + (rd * (2**11)) + (shamt * (2*6)) + (function * (2**0))
+    Instruction_Encode = (opcode * (2**26)) + (rd * (2**21)) + (rs * (2**16)) + (rt * (2**11)) + (shamt * (2*6)) + (function * (2**0))
     print(f'instruction_list = {instruction_list} | function = {function} | rd = {rd} | rs = {rs} | rt = {rt} | Encode = {hex(Instruction_Encode)}')
     return (Instruction_Encode)
     
     
 def I_Type_Encode(instruction_list,opcode):
     rd = int(instruction_list[1].replace('R',''))
-    rt = int(instruction_list[2].replace('R',''))
+    rs = int(instruction_list[2].replace('R',''))
     imm = int(instruction_list[3])
-    Instruction_Encode = (opcode * (2**26)) + (rt * (2**21)) + (rd * (2**16)) + (imm * (2**0))
-    print(f'instruction_list = {instruction_list} | opcode = {opcode} | rt = {rt} | rd = {rd} | imm = {imm} | Encode = {hex(Instruction_Encode)}')
+    Instruction_Encode = (opcode * (2**26)) + (rd * (2**21)) + (rs * (2**16)) + (imm * (2**0))
+    print(f'instruction_list = {instruction_list} | opcode = {opcode} | rs = {rs} | rd = {rd} | imm = {imm} | Encode = {hex(Instruction_Encode)}')
     return (Instruction_Encode)
     
 def BR_Type_Encode(instruction_list,opcode):
     rd = int(instruction_list[1].replace('R',''))
-    rt = int(instruction_list[2].replace('R',''))
+    rs = int(instruction_list[2].replace('R',''))
     addr = int(instruction_list[3])
-    Instruction_Encode = (opcode * (2**26)) + (rd * (2**21)) + (rt * (2**16)) + (addr * (2**0))
-    print(f'instruction_list = {instruction_list} | opcode = {opcode} | rd = {rd} | rt = {rt} | addr = {addr} | Encode = {hex(Instruction_Encode)}')
+    Instruction_Encode = (opcode * (2**26)) + (rd * (2**21)) + (rs * (2**16)) + (addr * (2**0))
+    print(f'instruction_list = {instruction_list} | opcode = {opcode} | rd = {rd} | rs = {rs} | addr = {addr} | Encode = {hex(Instruction_Encode)}')
     return (Instruction_Encode)
     
 def MEM_Type_Encode(instruction_list,opcode):
     rd = int(instruction_list[1].replace('R',''))
-    rt = int(instruction_list[3].replace('R',''))
+    rs = int(instruction_list[3].replace('R',''))
     imm = int(instruction_list[2])
-    Instruction_Encode = (opcode * (2**26)) + (rd * (2**21)) + (rt * (2**16)) + (imm * (2**0))
-    print(f'instruction_list = {instruction_list} | opcode = {opcode} | rd = {rd} | rt = {rt} | imm = {imm} | Encode = {hex(Instruction_Encode)}')
+    Instruction_Encode = (opcode * (2**26)) + (rd * (2**21)) + (rs * (2**16)) + (imm * (2**0))
+    print(f'instruction_list = {instruction_list} | opcode = {opcode} | rd = {rd} | rs = {rs} | imm = {imm} | Encode = {hex(Instruction_Encode)}')
     return (Instruction_Encode)
     
 def J_Type_Encode(instruction_list,opcode):
-    addr = int(instruction_list[1])
-    Instruction_Encode = (opcode * (2**26)) + (addr * (2**0))
-    print(f'instruction_list = {instruction_list} | opcode = {opcode} | addr = {addr} | Encode = {hex(Instruction_Encode)}')
+    if (instruction_list[0] == 'RET'):
+        Instruction_Encode = opcode * (2**26)
+        print(f'instruction_list = {instruction_list} | opcode = {opcode} | Encode = {hex(Instruction_Encode)}')
+    else:
+        addr = int(instruction_list[1])
+        Instruction_Encode = (opcode * (2**26)) + (addr * (2**0))
+        print(f'instruction_list = {instruction_list} | opcode = {opcode} | addr = {addr} | Encode = {hex(Instruction_Encode)}')
     return (Instruction_Encode)
     
 def BUS_Type_Encode(instruction_list,opcode):
