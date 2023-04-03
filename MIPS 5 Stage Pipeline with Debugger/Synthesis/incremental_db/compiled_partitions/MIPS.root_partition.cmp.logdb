@@ -1,0 +1,11 @@
+v1
+DSP_BALANCING_IMPLEMENTATION,DSP_BLOCKS,MIPS:U1|Stage3:U3|ALU:U1|lpm_mult:Mult0|mult_7dt:auto_generated|mac_out2,
+DSP_BALANCING_IMPLEMENTATION,DSP_BLOCKS,MIPS:U1|Stage3:U3|ALU:U1|lpm_mult:Mult1|mult_7dt:auto_generated|mac_out2,
+DSP_BALANCING_IMPLEMENTATION,DSP_BLOCKS,MIPS:U1|Stage3:U3|ALU:U1|lpm_mult:Mult1|mult_7dt:auto_generated|mac_out4,
+DSP_BALANCING_IMPLEMENTATION,DSP_BLOCKS,MIPS:U1|Stage3:U3|ALU:U1|lpm_mult:Mult1|mult_7dt:auto_generated|mac_out6,
+DSP_BALANCING_IMPLEMENTATION,DSP_BLOCKS,MIPS:U1|Stage3:U3|ALU:U1|lpm_mult:Mult0|mult_7dt:auto_generated|mac_out4,
+DSP_BALANCING_IMPLEMENTATION,DSP_BLOCKS,MIPS:U1|Stage3:U3|ALU:U1|lpm_mult:Mult0|mult_7dt:auto_generated|mac_out6,
+PORT_SWAPPING,PORT_SWAP_TYPE_DSPMULT,MIPS:U1|Stage3:U3|ALU:U1|lpm_mult:Mult0|mult_7dt:auto_generated|mac_mult5,
+PORT_SWAPPING,PORT_SWAP_TYPE_DSPMULT,MIPS:U1|Stage3:U3|ALU:U1|lpm_mult:Mult1|mult_7dt:auto_generated|mac_mult3,
+PORT_SWAPPING,PORT_SWAP_TYPE_DSPMULT,MIPS:U1|Stage3:U3|ALU:U1|lpm_mult:Mult1|mult_7dt:auto_generated|mac_mult5,
+PORT_SWAPPING,PORT_SWAP_TYPE_DSPMULT,MIPS:U1|Stage3:U3|ALU:U1|lpm_mult:Mult1|mult_7dt:auto_generated|mac_mult1,

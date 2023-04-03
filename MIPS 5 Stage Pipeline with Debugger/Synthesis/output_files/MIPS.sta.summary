@@ -1,0 +1,245 @@
+------------------------------------------------------------
+Timing Analyzer Summary
+------------------------------------------------------------
+
+Type  : Slow 1200mV 85C Model Setup 'Debugger:U11|CPU_clk'
+Slack : -456.984
+TNS   : -98299.206
+
+Type  : Slow 1200mV 85C Model Setup 'Debugger2:U12|UART_Transmitter:U3|UARTclk'
+Slack : -5.393
+TNS   : -19.093
+
+Type  : Slow 1200mV 85C Model Setup 'clk'
+Slack : -4.084
+TNS   : -176.310
+
+Type  : Slow 1200mV 85C Model Setup 'Debugger:U11|Reciever:U1|clk'
+Slack : -3.755
+TNS   : -30.270
+
+Type  : Slow 1200mV 85C Model Setup 'Debugger:U11|UART_Four_Packet_RECV:U2|clk_packet_signal'
+Slack : -3.590
+TNS   : -185.515
+
+Type  : Slow 1200mV 85C Model Setup 'Debugger:U11|Reciever:U1|recv_flag'
+Slack : -0.158
+TNS   : -0.716
+
+Type  : Slow 1200mV 85C Model Hold 'Debugger:U11|UART_Four_Packet_RECV:U2|clk_packet_signal'
+Slack : -0.127
+TNS   : -0.585
+
+Type  : Slow 1200mV 85C Model Hold 'clk'
+Slack : 0.385
+TNS   : 0.000
+
+Type  : Slow 1200mV 85C Model Hold 'Debugger:U11|CPU_clk'
+Slack : 0.402
+TNS   : 0.000
+
+Type  : Slow 1200mV 85C Model Hold 'Debugger:U11|Reciever:U1|recv_flag'
+Slack : 0.402
+TNS   : 0.000
+
+Type  : Slow 1200mV 85C Model Hold 'Debugger2:U12|UART_Transmitter:U3|UARTclk'
+Slack : 0.403
+TNS   : 0.000
+
+Type  : Slow 1200mV 85C Model Hold 'Debugger:U11|Reciever:U1|clk'
+Slack : 0.428
+TNS   : 0.000
+
+Type  : Slow 1200mV 85C Model Recovery 'Debugger:U11|CPU_clk'
+Slack : -6.879
+TNS   : -8117.850
+
+Type  : Slow 1200mV 85C Model Removal 'Debugger:U11|CPU_clk'
+Slack : 6.059
+TNS   : 0.000
+
+Type  : Slow 1200mV 85C Model Minimum Pulse Width 'clk'
+Slack : -3.000
+TNS   : -74.960
+
+Type  : Slow 1200mV 85C Model Minimum Pulse Width 'Debugger:U11|CPU_clk'
+Slack : -2.693
+TNS   : -12316.424
+
+Type  : Slow 1200mV 85C Model Minimum Pulse Width 'Debugger:U11|UART_Four_Packet_RECV:U2|clk_packet_signal'
+Slack : -1.285
+TNS   : -115.650
+
+Type  : Slow 1200mV 85C Model Minimum Pulse Width 'Debugger:U11|Reciever:U1|recv_flag'
+Slack : -1.285
+TNS   : -44.975
+
+Type  : Slow 1200mV 85C Model Minimum Pulse Width 'Debugger2:U12|UART_Transmitter:U3|UARTclk'
+Slack : -1.285
+TNS   : -21.845
+
+Type  : Slow 1200mV 85C Model Minimum Pulse Width 'Debugger:U11|Reciever:U1|clk'
+Slack : -1.285
+TNS   : -20.560
+
+Type  : Slow 1200mV 0C Model Setup 'Debugger:U11|CPU_clk'
+Slack : -424.316
+TNS   : -89422.480
+
+Type  : Slow 1200mV 0C Model Setup 'Debugger2:U12|UART_Transmitter:U3|UARTclk'
+Slack : -4.788
+TNS   : -16.027
+
+Type  : Slow 1200mV 0C Model Setup 'clk'
+Slack : -3.690
+TNS   : -157.649
+
+Type  : Slow 1200mV 0C Model Setup 'Debugger:U11|Reciever:U1|clk'
+Slack : -3.414
+TNS   : -27.312
+
+Type  : Slow 1200mV 0C Model Setup 'Debugger:U11|UART_Four_Packet_RECV:U2|clk_packet_signal'
+Slack : -3.238
+TNS   : -165.468
+
+Type  : Slow 1200mV 0C Model Setup 'Debugger:U11|Reciever:U1|recv_flag'
+Slack : -0.037
+TNS   : -0.056
+
+Type  : Slow 1200mV 0C Model Hold 'Debugger:U11|UART_Four_Packet_RECV:U2|clk_packet_signal'
+Slack : 0.032
+TNS   : 0.000
+
+Type  : Slow 1200mV 0C Model Hold 'clk'
+Slack : 0.338
+TNS   : 0.000
+
+Type  : Slow 1200mV 0C Model Hold 'Debugger:U11|CPU_clk'
+Slack : 0.352
+TNS   : 0.000
+
+Type  : Slow 1200mV 0C Model Hold 'Debugger2:U12|UART_Transmitter:U3|UARTclk'
+Slack : 0.354
+TNS   : 0.000
+
+Type  : Slow 1200mV 0C Model Hold 'Debugger:U11|Reciever:U1|recv_flag'
+Slack : 0.354
+TNS   : 0.000
+
+Type  : Slow 1200mV 0C Model Hold 'Debugger:U11|Reciever:U1|clk'
+Slack : 0.388
+TNS   : 0.000
+
+Type  : Slow 1200mV 0C Model Recovery 'Debugger:U11|CPU_clk'
+Slack : -6.108
+TNS   : -7167.281
+
+Type  : Slow 1200mV 0C Model Removal 'Debugger:U11|CPU_clk'
+Slack : 5.443
+TNS   : 0.000
+
+Type  : Slow 1200mV 0C Model Minimum Pulse Width 'clk'
+Slack : -3.000
+TNS   : -74.960
+
+Type  : Slow 1200mV 0C Model Minimum Pulse Width 'Debugger:U11|CPU_clk'
+Slack : -2.649
+TNS   : -12316.072
+
+Type  : Slow 1200mV 0C Model Minimum Pulse Width 'Debugger:U11|UART_Four_Packet_RECV:U2|clk_packet_signal'
+Slack : -1.285
+TNS   : -115.650
+
+Type  : Slow 1200mV 0C Model Minimum Pulse Width 'Debugger:U11|Reciever:U1|recv_flag'
+Slack : -1.285
+TNS   : -44.975
+
+Type  : Slow 1200mV 0C Model Minimum Pulse Width 'Debugger2:U12|UART_Transmitter:U3|UARTclk'
+Slack : -1.285
+TNS   : -21.845
+
+Type  : Slow 1200mV 0C Model Minimum Pulse Width 'Debugger:U11|Reciever:U1|clk'
+Slack : -1.285
+TNS   : -20.560
+
+Type  : Fast 1200mV 0C Model Setup 'Debugger:U11|CPU_clk'
+Slack : -223.591
+TNS   : -50070.388
+
+Type  : Fast 1200mV 0C Model Setup 'Debugger2:U12|UART_Transmitter:U3|UARTclk'
+Slack : -2.807
+TNS   : -8.149
+
+Type  : Fast 1200mV 0C Model Setup 'clk'
+Slack : -1.468
+TNS   : -56.927
+
+Type  : Fast 1200mV 0C Model Setup 'Debugger:U11|UART_Four_Packet_RECV:U2|clk_packet_signal'
+Slack : -1.396
+TNS   : -55.255
+
+Type  : Fast 1200mV 0C Model Setup 'Debugger:U11|Reciever:U1|clk'
+Slack : -1.315
+TNS   : -10.520
+
+Type  : Fast 1200mV 0C Model Setup 'Debugger:U11|Reciever:U1|recv_flag'
+Slack : 0.417
+TNS   : 0.000
+
+Type  : Fast 1200mV 0C Model Hold 'Debugger:U11|UART_Four_Packet_RECV:U2|clk_packet_signal'
+Slack : -0.152
+TNS   : -1.604
+
+Type  : Fast 1200mV 0C Model Hold 'Debugger:U11|Reciever:U1|recv_flag'
+Slack : 0.169
+TNS   : 0.000
+
+Type  : Fast 1200mV 0C Model Hold 'clk'
+Slack : 0.173
+TNS   : 0.000
+
+Type  : Fast 1200mV 0C Model Hold 'Debugger:U11|CPU_clk'
+Slack : 0.180
+TNS   : 0.000
+
+Type  : Fast 1200mV 0C Model Hold 'Debugger2:U12|UART_Transmitter:U3|UARTclk'
+Slack : 0.182
+TNS   : 0.000
+
+Type  : Fast 1200mV 0C Model Hold 'Debugger:U11|Reciever:U1|clk'
+Slack : 0.192
+TNS   : 0.000
+
+Type  : Fast 1200mV 0C Model Recovery 'Debugger:U11|CPU_clk'
+Slack : -3.603
+TNS   : -3982.320
+
+Type  : Fast 1200mV 0C Model Removal 'Debugger:U11|CPU_clk'
+Slack : 3.334
+TNS   : 0.000
+
+Type  : Fast 1200mV 0C Model Minimum Pulse Width 'clk'
+Slack : -3.000
+TNS   : -62.652
+
+Type  : Fast 1200mV 0C Model Minimum Pulse Width 'Debugger:U11|CPU_clk'
+Slack : -1.000
+TNS   : -9576.000
+
+Type  : Fast 1200mV 0C Model Minimum Pulse Width 'Debugger:U11|UART_Four_Packet_RECV:U2|clk_packet_signal'
+Slack : -1.000
+TNS   : -94.312
+
+Type  : Fast 1200mV 0C Model Minimum Pulse Width 'Debugger:U11|Reciever:U1|recv_flag'
+Slack : -1.000
+TNS   : -35.000
+
+Type  : Fast 1200mV 0C Model Minimum Pulse Width 'Debugger2:U12|UART_Transmitter:U3|UARTclk'
+Slack : -1.000
+TNS   : -17.000
+
+Type  : Fast 1200mV 0C Model Minimum Pulse Width 'Debugger:U11|Reciever:U1|clk'
+Slack : -1.000
+TNS   : -16.000
+
+------------------------------------------------------------
