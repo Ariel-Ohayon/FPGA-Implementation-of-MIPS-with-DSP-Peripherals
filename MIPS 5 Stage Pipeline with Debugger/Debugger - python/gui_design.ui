@@ -584,6 +584,19 @@
      <string>Register 31:</string>
     </property>
    </widget>
+   <widget class="QPushButton" name="pushButton_Read_All_Registers">
+    <property name="geometry">
+     <rect>
+      <x>40</x>
+      <y>660</y>
+      <width>231</width>
+      <height>28</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Read All Registers</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
