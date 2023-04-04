@@ -22,8 +22,9 @@ class GUI(QMainWindow):
         self.pushButton_Run.clicked.connect(lambda: self.Run(port))
         self.pushButton_Stop.clicked.connect(lambda: self.Stop())
         self.pushButton_Read_Reg.clicked.connect(lambda: self.Read_Reg(port,self.lineEdit_Reg_number.text()))
+        self.pushButton_Read_All_Registers.clicked.connect(lambda:self.Read_All_Reg(port))
     
-    def Read_Reg(self,port,reg_num):
+    def function_Read_Reg(self,port,reg_num):
         print(f'Read data from register number: {reg_num}')
         num = int(reg_num)
         
@@ -113,6 +114,15 @@ class GUI(QMainWindow):
             self.Label_Reg31.setText(f'Register 31: {data}')
         
         print(f'Register {num} = {data}')
+        time.sleep(0.1)
+    
+    def Read_Reg(self,port,reg_num):
+        self.function_Read_Reg(port,reg_num)
+    
+    def Read_All_Reg(self,port):
+        for i in range(1,32):
+            self.function_Read_Reg(port,str(i))
+        print('Update the all registers data in the GUI')
     
     def Stop(self):
         print('Stop')
@@ -336,4 +346,3 @@ def serport():
 if __name__ == '__main__':
     main()
     
-
