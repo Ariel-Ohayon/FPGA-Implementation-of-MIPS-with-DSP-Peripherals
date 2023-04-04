@@ -1,3 +1,4 @@
+from colorama import Fore, Back, Style
 import time
 import os.path
 import serial.tools.list_ports
@@ -10,7 +11,11 @@ class GUI(QMainWindow):
     def __init__(self):
         
         port = serport()
-        
+        if(port == None):
+            print(Fore.RED + 'Error')
+            print('You have to exit from the software and connect COM port')
+            print(Style.RESET_ALL)
+            
         super(GUI, self).__init__()
         uic.loadUi('gui_design.ui',self)
         self.show()
@@ -23,32 +28,39 @@ class GUI(QMainWindow):
         self.pushButton_Stop.clicked.connect(lambda: self.Stop())
         self.pushButton_Read_Reg.clicked.connect(lambda: self.Read_Reg(port,self.lineEdit_Reg_number.text()))
         self.pushButton_Read_All_Registers.clicked.connect(lambda:self.Read_All_Reg(port))
+        self.actionClose.triggered.connect(exit)
+        
+    def thread_read_serial(self,port):
+        self.byte0 = port.read()
+        self.byte1 = port.read()
+        self.byte2 = port.read()
+        self.byte3 = port.read()
     
     def function_Read_Reg(self,port,reg_num):
         print(f'Read data from register number: {reg_num}')
         num = int(reg_num)
         
-        port.write(b'R')    # 0x52
-        port.write(b'E')    # 0x45
-        port.write(b'G')    # 0x47
-        port.write(num.to_bytes(1,'big'))
+        self.thread = threading.Thread(target = self.thread_read_serial, args = (port,))
+        self.thread.start()
         
-        byte0 = port.read()
-        byte1 = port.read()
-        byte2 = port.read()
-        byte3 = port.read()
+        while(self.thread.is_alive()):
+            port.write(b'R')    # 0x52
+            port.write(b'E')    # 0x45
+            port.write(b'G')    # 0x47
+            port.write(num.to_bytes(1,'big'))
+            time.sleep(0.01)
         
         port.write(b'0')
         port.write(b'0')
         port.write(b'0')
         port.write(b'0')
         
-        byte0 = int.from_bytes(byte0,'big')
-        byte1 = int.from_bytes(byte1,'big')
-        byte2 = int.from_bytes(byte2,'big')
-        byte3 = int.from_bytes(byte3,'big')
+        self.byte0 = int.from_bytes(self.byte0,'big')
+        self.byte1 = int.from_bytes(self.byte1,'big')
+        self.byte2 = int.from_bytes(self.byte2,'big')
+        self.byte3 = int.from_bytes(self.byte3,'big')
         
-        data = byte0 + (byte1 * (2**8)) + (byte2 * (2**16)) + (byte3 * (2**24))
+        data = self.byte0 + (self.byte1 * (2**8)) + (self.byte2 * (2**16)) + (self.byte3 * (2**24))
         
         if(num == 1):
             self.Label_Reg1.setText(f'Register 1: {data}')
@@ -114,7 +126,6 @@ class GUI(QMainWindow):
             self.Label_Reg31.setText(f'Register 31: {data}')
         
         print(f'Register {num} = {data}')
-        time.sleep(0.1)
     
     def Read_Reg(self,port,reg_num):
         self.function_Read_Reg(port,reg_num)
@@ -122,7 +133,7 @@ class GUI(QMainWindow):
     def Read_All_Reg(self,port):
         for i in range(1,32):
             self.function_Read_Reg(port,str(i))
-        print('Update the all registers data in the GUI')
+        print('Update all registers data in the GUI')
     
     def Stop(self):
         print('Stop')
@@ -130,7 +141,7 @@ class GUI(QMainWindow):
         
 
     def Run (self,port):
-        print('The CPU run with frequency clock = 1[Hz]')
+        print('The CPU run with constant frequency clock')
         self.stop_thread = False
         self.thread = threading.Thread(target = self.clockcycles, args = (port,lambda:self.stop_thread))
         self.thread.start()
@@ -162,30 +173,30 @@ class GUI(QMainWindow):
         port.write(b'0')
         print('Reset operation accomplished')
         
-    def Read_I_Memory(self,port):
-        print('Enter Read Instruction Memory mode')
-        port.write(b'I')    # 0x49
-        port.write(b'M')    # 0x4D
-        port.write(b'R')    # 0x52
-        port.write(b'E')    # 0x45
+    def Read_I_Memory(self,port):   # use here threads to read from COM port
+    
+        self.thread = threading.Thread(target = self.thread_read_serial, args = (port,))
+        self.thread.start()
         
-        print('Wait for getting the data in this address')
-        byte0 = port.read()
-        byte1 = port.read()
-        byte2 = port.read()
-        byte3 = port.read()
+        if(self.thread.is_alive()):
+            print('Enter Read Instruction Memory mode')
+            port.write(b'I')    # 0x49
+            port.write(b'M')    # 0x4D
+            port.write(b'R')    # 0x52
+            port.write(b'E')    # 0x45
+            time.sleep(0.1)
         
-        byte0 = int.from_bytes(byte0,'big')
-        byte1 = int.from_bytes(byte1,'big')
-        byte2 = int.from_bytes(byte2,'big')
-        byte3 = int.from_bytes(byte3,'big')
+        self.byte0 = int.from_bytes(self.byte0,'big')
+        self.byte1 = int.from_bytes(self.byte1,'big')
+        self.byte2 = int.from_bytes(self.byte2,'big')
+        self.byte3 = int.from_bytes(self.byte3,'big')
         
         port.write(b'0')
         port.write(b'0')
         port.write(b'0')
         port.write(b'0')
         
-        data = byte0 + (byte1 * (2**8)) + (byte2 * (2**16)) + (byte3 * (2**24))
+        data = self.byte0 + (self.byte1 * (2**8)) + (self.byte2 * (2**16)) + (self.byte3 * (2**24))
         
         print(f'the data in this specific cell: {data}')
         self.label_Value_from_I_Memory.setText(f'{hex(data)}')
@@ -203,6 +214,17 @@ class GUI(QMainWindow):
         port.write(b'0')
         
     def program_Instructions(self,port,directory):
+        
+        print('check if file is exist')
+        print(directory)
+        exist = os.path.exists(directory)
+        print(exist)
+        if(exist == False):
+            print(Fore.RED + 'File does not exist.')
+            print(Style.RESET_ALL)
+            return None
+        
+            
         print('Enter to Program Instruction mode')
         print('Now the software will burn commands in the instruction memory')
         
