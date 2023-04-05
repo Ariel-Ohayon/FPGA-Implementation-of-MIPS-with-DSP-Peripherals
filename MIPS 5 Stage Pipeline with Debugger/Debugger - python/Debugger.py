@@ -249,70 +249,77 @@ class GUI(QMainWindow):
         encode_file = open(directory,'r')
         for index,line in enumerate(encode_file):
             line = line.replace('\n','')
-            print(f'index = {index}: line = {line}')
-            line_list = line.split(':')
-            print(f'line_list = {line_list}')
-            address = line_list[0]
-            instruction = line_list[1]
-            instruction_list = instruction.split('|')
-            
-            hex_instruction = instruction_list[0]
-            dec_instruction = instruction_list[1]
-            print(f'address = {address}, hex_instruction = {hex_instruction}, dec_instruction = {dec_instruction}')
-            
-            num_address = int(address)
-            num_instruction = int(dec_instruction)
-            
-            print(f'num_address = {num_address}, num_instruction = {num_instruction}')
-            
-            # write address to the core
-            print('write the address of the current cell in instruction memory')
-            port.write(num_address.to_bytes(1,'big'))
-            port.write(b'\x00')
-            port.write(b'\x00')
-            port.write(b'\x00')
-            
-            print(num_address.to_bytes(1,'big'))
-            print(b'\x00')
-            print(b'\x00')
-            print(b'\x00')
-            time.sleep(0.2)
-            
-            mask_byte0 = 0x000000FF
-            mask_byte1 = 0x0000FF00
-            mask_byte2 = 0x00FF0000
-            mask_byte3 = 0xFF000000
-            
-            byte0 = num_instruction & mask_byte0
-            byte1 = (num_instruction & mask_byte1) >> 8
-            byte2 = (num_instruction & mask_byte2) >> 16
-            byte3 = (num_instruction & mask_byte3) >> 24
-            
-            # write data to the core
-            print('Write the data to prog the cell')
-            port.write(byte0.to_bytes(1,'big'))
-            port.write(byte1.to_bytes(1,'big'))
-            port.write(byte2.to_bytes(1,'big'))
-            port.write(byte3.to_bytes(1,'big'))
-            
-            print(byte0.to_bytes(1,'big'))
-            print(byte1.to_bytes(1,'big'))
-            print(byte2.to_bytes(1,'big'))
-            print(byte3.to_bytes(1,'big'))
-            time.sleep(0.2)
-            
-            # clk pulse:
-            print('Send Pulse')
-            port.write(b'c')    # 0x63 = 01100011
-            port.write(b'c')    # 0x63 = 01100011
-            port.write(b'l')    # 0x6C = 01101100
-            port.write(b'k')    # 0x6B = 01101011
-            
-            port.write(b'0')    # c - cmd (command)
-            port.write(b'0')    # send clk (clock)
-            port.write(b'0')
-            port.write(b'0')
-            time.sleep(0.2)
+            if(line == 'I:'):
+                print('Start program Instruction Memory')
+                progmode = 1
+            elif(line == 'D:'):
+                print('Start program Data Memory')
+                progmode = 2
+            else:
+                print(f'index = {index}: line = {line}')
+                line_list = line.split(':')
+                print(f'line_list = {line_list}')
+                address = line_list[0]
+                instruction = line_list[1]
+                instruction_list = instruction.split('|')
+                
+                hex_instruction = instruction_list[0]
+                dec_instruction = instruction_list[1]
+                print(f'address = {address}, hex_instruction = {hex_instruction}, dec_instruction = {dec_instruction}')
+                
+                num_address = int(address)
+                num_instruction = int(dec_instruction)
+                
+                print(f'num_address = {num_address}, num_instruction = {num_instruction}')
+                
+                # write address to the core
+                print('write the address of the current cell in instruction memory')
+                port.write(num_address.to_bytes(1,'big'))
+                port.write(b'\x00')
+                port.write(b'\x00')
+                port.write(b'\x00')
+                
+                print(num_address.to_bytes(1,'big'))
+                print(b'\x00')
+                print(b'\x00')
+                print(b'\x00')
+                time.sleep(0.2)
+                
+                mask_byte0 = 0x000000FF
+                mask_byte1 = 0x0000FF00
+                mask_byte2 = 0x00FF0000
+                mask_byte3 = 0xFF000000
+                
+                byte0 = num_instruction & mask_byte0
+                byte1 = (num_instruction & mask_byte1) >> 8
+                byte2 = (num_instruction & mask_byte2) >> 16
+                byte3 = (num_instruction & mask_byte3) >> 24
+                
+                # write data to the core
+                print('Write the data to prog the cell')
+                port.write(byte0.to_bytes(1,'big'))
+                port.write(byte1.to_bytes(1,'big'))
+                port.write(byte2.to_bytes(1,'big'))
+                port.write(byte3.to_bytes(1,'big'))
+                
+                print(byte0.to_bytes(1,'big'))
+                print(byte1.to_bytes(1,'big'))
+                print(byte2.to_bytes(1,'big'))
+                print(byte3.to_bytes(1,'big'))
+                time.sleep(0.2)
+                
+                # clk pulse:
+                print('Send Pulse')
+                port.write(b'c')    # 0x63 = 01100011
+                port.write(b'c')    # 0x63 = 01100011
+                port.write(b'l')    # 0x6C = 01101100
+                port.write(b'k')    # 0x6B = 01101011
+                
+                port.write(b'0')    # c - cmd (command)
+                port.write(b'0')    # send clk (clock)
+                port.write(b'0')
+                port.write(b'0')
+                time.sleep(0.2)
             
         # Exit from programming mode (Disable the progmode)
         port.write(b'I')    # 0x49
