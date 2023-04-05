@@ -1,6 +1,10 @@
+import os
 def main():
     
-    filename = input('Enter file name: ')
+    print('The files in the directory:')
+    os.system('dir/b')
+    
+    filename = input('Choose file to convert to machine language: ')
     
     ReadFile = open(filename,'r')
     WriteFile = open('output file.txt', 'w')
@@ -16,14 +20,17 @@ def main():
         
         if(line == '.start'):
             Encode = 1
+            print('Start Encoding the instructions')
+            WriteFile.write('I:\n')#I = Instructions (Program into the Instruction Memory)
         elif(line == '.data'):
             Encode = 2
-        
+            print('Start Encoding the data')
+            WriteFile.write('D:\n')#D = Data (Program into the Data Memory)
         else:
             if(Encode == 1):    # Instruction Encode
-                if(line != ''):
-                    line = line.replace(',',' ').replace('(',' ').replace(')',' ')
-                    instruction_list = line.split()
+                line = line.replace(',',' ').replace('(',' ').replace(')',' ')
+                instruction_list = line.split()
+                if(not(instruction_list == [])):
                     
                     if(instruction_list[0] == 'NOP'):
                         Instruction_Encode = 4 # ADD R0,R0,R0
@@ -142,8 +149,15 @@ def main():
                     WriteFile.write(f'{instruction_number}:{hex(Instruction_Encode)}|{Instruction_Encode}| - / {line} \ -\n')
                     instruction_number += 1
                     # -- Print Encod to output file -- #
-                    
-                    
+            elif(Encode == 2):
+                line = line.replace(':',' ')
+                Mdata = line.split()
+                if(not (Mdata == [])):
+                    print(Mdata)
+                    addr = Mdata[0]
+                    data = int(Mdata[1])
+                    WriteFile.write(f'{addr}:{hex(data)}|{data}\n')
+                
                 
     ReadFile.close()
     WriteFile.close()
