@@ -1,0 +1,14 @@
+Addr	|	Register		|	Description
+		|					|
+0x0001	|	port out		|	the register contain the data of the output port
+0x0002	|	port in			|	the register contain the data of the input port
+0x0003	|	FIR Control		|	Register that send 2 control signals to FIR peripheral (bit0: Run, bit1: En_Prog_H)
+0x0004	|	FIR addr conv	|	Register hold the constant number address for the impulse response programming
+0x0005	|	FIR data conv	|	Register hold the constant data of the specific element in the impulse response
+0x0006	|	FIR addr		|	Register hold the constant number address for the output signal we want to read.
+0x0007	|	FIR Threshold	|	Register hold threshold value that determine how many samples takes from the output
+0x0008	|	FIR Read RAM	|	get the output of the RAM block that samples the FIR filter output.
+0x0009	|	Sin_Gen_Amp1	|	amplitude of first sin wave.
+0x000A	|	Sin_Gen_Amp2	|	amplitude of 2nd sin wave.
+0x000B	|	Sin_Gen_phase1	|	phase increment value of the first sin wave.
+0x000C	|	Sin_Gen_phase2	|	phase increment value of the 2nd sin wave.
