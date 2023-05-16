@@ -1,0 +1,7 @@
+.start
+	ADDI	R1,R0,4096
+	PERBUSW	R1,9
+	ADDI	R2,R0,9
+	PERBUSW	R2,11
+	
+	JMP		4

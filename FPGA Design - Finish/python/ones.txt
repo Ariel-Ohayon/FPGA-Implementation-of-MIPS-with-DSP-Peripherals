@@ -1,0 +1,17 @@
+.start
+	LDW		R3,1(R0)	#0
+	CALL 	4			#1
+	LDW		R16,5(R0)	#2
+	JMP		3			#3
+	ADDI	R2,R0,0		#4
+	ADDI	R1,R0,1		#5
+	AND		R4,R1,R3	#6
+	BNE		R4,R1,9		#7
+	ADDI	R2,R2,1		#8
+	SRL		R3,R3,R1	#9
+	BNE		R3,R0,6		#10
+	STW		R2,5(R0)	#11
+	RET					#12
+
+.data
+	1:3550
